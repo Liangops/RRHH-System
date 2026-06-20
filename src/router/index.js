@@ -6,6 +6,8 @@ import expedienteView from "../views/expedienteView.vue"
 import permisosvacacioneView from "../views/permisosvacacioneView.vue";
 import asistenciaView from "../views/asistenciaView.vue";
 import nominaView from "../views/nominaView.vue";
+import capacitacionesView from "../views/capacitacionesView.vue";
+import reportesView from "../views/reportesView.vue";
 
 const routes = [
     {
@@ -47,12 +49,18 @@ const routes = [
         name: 'nomina',
         component: nominaView
     },
-    /*
+    
     {
         path: '/capacitaciones',
         name: 'capacitaciones',
-        component: departamentoView
+        component: capacitacionesView
     },
+    {
+        path: '/reportes',
+        name: 'reportes',
+        component: reportesView
+    }
+    /*
     {
         path: '/basedeconocimiento',
         name: 'basedeconocimiento',
@@ -63,8 +71,11 @@ const routes = [
         name: 'chatia',
         component: departamentoView
     },
+    */
+
     
-        */
+    
+    
 ]
 
 const router = createRouter({

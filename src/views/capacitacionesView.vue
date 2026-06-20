@@ -1,32 +1,40 @@
-<script setup>
+x<script setup>
 import { ref, reactive } from 'vue'
 
 const modalAbierto = ref(false)
 const modalTipo = ref('')
 const form = reactive({})
 
-const departamentos = ref([
+const capacitaciones = ref([
     {
-        codigo: '10001',
-        nombre: 'Administración corporativa',
-        descripcion: 'Administrar la compañia',
-        empleados: '7',
+        curso: 'Liderazgo y Desempeño',
+        fechaInicio: '13/06/2026',
+        duracion: '2 semanas',
+        participantes: '14',
+        estado: 'Proximo'
     },
-
     {
-        codigo: '10021',
-        nombre: 'Finanzas',
-        descripcion: 'Administrar las finanzas del corporativo',
-        empleados: '14',
+        
+        curso: 'Proyectos Integradores',
+        fechaInicio: '13/06/2026',
+        duracion: '3 días',
+        participantes: '14',
+        estado: 'Proximo'
     },
-
     {
-        codigo: '10583',
-        nombre: 'Suministros',
-        descripcion: 'Realizar las compras del corporativo',
-        empleados: '4',
+        curso: 'Metodologia Agíl en el trabajo',
+        fechaInicio: '13/06/2026',
+        duracion: '8 horas',
+        participantes: '14',
+        estado: 'En proceso'
     }
 ])
+
+
+
+function aprobarPermisos(empleado) {
+    // codigo para aprobar al empleado
+}
 
 function openModal(tipo) {
     modalTipo.value = tipo
@@ -38,36 +46,34 @@ function closeModal() {
     modalAbierto.value = false
 }
 
-function editarDepartamento(departamento) {
-    Object.assign(form, { ...departamento })
-    modalTipo.value = 'departamento'
+function editarCapacitacion(caps) {
+    Object.assign(form, { ...caps })
+    modalTipo.value = 'caps'
     modalAbierto.value = true
 }
 
-
-
-function eliminarDepartamento(codigo) {
-    if (confirm('¿Estás seguro de que deseas eliminar este departamento?')) {
-        departamentos.value = departamentos.value.filter(e => e.codigo !== codigo)
-    }
-}
-
-function guardarDepartamento() {
+function guardarEmpleado() {
     if (form.id) {
         // Editar existente
-        const index = departamentos.value.findIndex(e => e.codigo === form.codigo)
+        const index = empleados.value.findIndex(e => e.id === form.id)
         if (index !== -1) {
-            departamentos.value[index] = { ...form }
+            empleados.value[index] = { ...form }
         }
     } else {
         // Crear nuevo
-        const nuevoId = departamentos.value.length
-            ? Math.max(...departamentos.value.map(e => e.codigo)) + 1
+        const nuevoId = empleados.value.length
+            ? Math.max(...empleados.value.map(e => e.id)) + 1
             : 1
-        departamentos.value.push({ ...form, codigo: nuevoId })
+        empleados.value.push({ ...form, id: nuevoId })
     }
     closeModal()
 }
+
+
+
+
+
+
 </script>
 
 <template>
@@ -77,52 +83,53 @@ function guardarDepartamento() {
         <!-- Header -->
         <div class="page-header">
             <div>
-                <div class="page-title">Departamentos</div>
-                <div class="page-subtitle">Áreas organizacionales de Grupo M</div>
+                <div class="page-title">Capacitaciones</div>
+                <div class="page-subtitle">Formación y desarrollo del personal
+
+</div>
             </div>
-            <button class="btn btn-primary" @click="openModal('departamento')">
+            <button class="btn btn-primary" @click="openModal('solicitiud')">
                 <i class="ti ti-plus"></i>
-                Nuevo Departamento
+                Nueva capacitación
             </button>
         </div>
 
-       
-
+    
         <!-- Tabla -->
         <div class="card">
             <div class="card-header">
-                <span class="card-title">Listado de departamentos</span>
-                
-            </div>
-            <div class="search-bar">
-                <i class="ti ti-search"></i>
-                <input type="text" placeholder="Buscar por codigo o nombre" />
+                <span class="card-title">Listado de cursos</span>
             </div>
             <table>
                 <thead>
                     <tr>
-                        <th>Codigo</th>
-                        <th>Nombre</th>
-                        <th>Descripción</th>
-                        <th>Empleados</th>
+                        <th>Curso</th>
+                        <th>Fecha de inicio</th>
+                        <th>Duración</th>
+                        <th>Participantes</th>
+                        <th>Estado</th>                        
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="dept in departamentos" :key="dept.codigo">
-                        <td>{{ dept.codigo }}</td>
-                        <td>{{ dept.nombre }}</td>
-                        <td>{{ dept.descripcion }}</td>
-                        <td>{{ dept.empleados }}</td>
+                    <tr v-for="caps in capacitaciones">
+                        <td>{{ caps.curso }}</td>
+                        <td>{{ caps.fechaInicio }}</td>
+                        <td>{{ caps.duracion }}</td>
+                        <td>{{ caps.participantes }}</td>
+                        <td>
+                            <span class="badge" :class="caps.estado === 'Proximo' ? 'badge-success' : 'badge-warning'">
+                                {{ caps.estado }}
+                            </span>
+                        </td>
                         <td class="td-actions">
-                            <button class="btn-icon" @click="editarDepartamento(departamento)" title="Editar">
+                            <button class="btn-icon" @click="editarCapacitacion(caps)" title="Modificar">
                                 <i class="ti ti-edit"></i>
                             </button>
-                            <button class="btn-icon" @click="eliminarDepartamento(dept.codigo)" title="Eliminar">
-                                <i class="ti ti-trash"></i>
-                            </button>
+                            
                         </td>
                     </tr>
+                    
                 </tbody>
             </table>
         </div>
@@ -132,40 +139,45 @@ function guardarDepartamento() {
     <div v-if="modalAbierto" class="modal-backdrop" @click.self="closeModal">
         <div class="modal">
             <div class="modal-header">
-                <span class="modal-title">{{ form.id ? 'Editar departamento' : 'Registrar departamento' }}</span>
+                <span class="modal-title">{{ form.id ? 'Editar capacitación' : 'Registrar capacitación' }}</span>
                 <button class="modal-close" @click="closeModal">
                     <i class="ti ti-x"></i>
                 </button>
             </div>
             <div class="modal-body">
-              
+                
                     <div class="form-group">
-                        <label class="form-label">Codigo *</label>
-                        <input class="form-control" v-model="form.nombre" placeholder="Ej: 10583" />
+                        <label class="form-label">Nombre del curso *</label>
+                        <input type="text" class="form-control" placeholder="Ej: Proyectos Integradores">
                     </div>
+                
+                <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">Nombre *</label>
-                        <input class="form-control" v-model="form.apellido" placeholder="Ej: Mantenimiento" />
-
+                        <label class="form-label">Fecha inicio * </label>
+                        <input type="date" class="form-control"/>
+                    </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Duración *</label>
+                    <input type="text" class="form-control" placeholder="Ej: 12 horas"/>
                 </div>
-        
+                </div>  
+            
                     <div class="form-group">
-                        <label class="form-label">Descripción *</label>
-                        <textarea  class="form-control" rows="4" cols="50" placeholder="Ej: Administrar el taller"></textarea>
+                        <label class="form-label">Descripción del curso *</label>
+                        <textarea  class="form-control" rows="4" cols="50" placeholder="Motivo, descripción o notas adicionales..."></textarea>
+                        
                     </div>
- 
-                
-                    
-                
             </div>
             <div class="modal-footer">
                 <button class="btn" @click="closeModal">Cancelar</button>
-                <button class="btn btn-primary" @click="guardarDepartamento">
+                <button class="btn btn-primary" @click="guardarEmpleado">
                     <i class="ti ti-device-floppy"></i> Guardar
                 </button>
             </div>
         </div>
     </div>
+  
 </template>
 
 <style>
@@ -202,20 +214,7 @@ body {
     margin-top: 3px;
 }
 
-.btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    border-radius: 8px;
-    border: 1px solid #d1d5db;
-    background: #fff;
-    font-size: 13px;
-    cursor: pointer;
-    color: #374151;
-    font-family: inherit;
-    transition: all .15s;
-}
+
 
 .btn-primary {
     background: #1a3c5e;
@@ -374,6 +373,7 @@ tr:hover td {
     background: #fef9c3;
     color: #854d0e;
 }
+
 
 /* Modal */
 .modal-backdrop {

@@ -291,24 +291,24 @@ body {
     align-items: center;
     gap: 6px;
     padding: 8px 16px;
-    border-radius: 8px;
+    border-radius: 15px;
     border: 1px solid #d1d5db;
     background: #fff;
     font-size: 13px;
-    cursor: pointer;
     color: #374151;
-    font-family: inherit;
+    cursor: pointer;
+    
     transition: all .15s;
 }
 
-.btn-primary {
-    background: #1a3c5e;
-    color: #fff;
-    border-color: #1a3c5e;
+.btn-primary { 
+    background: #1a3c5e; 
+    color: #fff; 
+    border-color: #1a3c5e; 
 }
-
-.btn-primary:hover {
+.btn-primary:hover { 
     background: #1d4570;
+    color: #fff; 
 }
 
 .btn-sm {

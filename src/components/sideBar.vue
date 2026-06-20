@@ -51,6 +51,39 @@
             Asistente IA
         </router-link>
 
+        <div class="sidebar-section"> Sistema </div>
+        <router-link to="/reportes" class="nav-item" active-class="nav-item-active">
+            <i class="ti ti-chart-bar"></i>
+            Reportes
+        </router-link>
+
+        <router-link to="/auditoria" class="nav-item" active-class="nav-item-active">
+            <i class="ti ti-shield-check"></i>
+            Auditoria
+        </router-link>
+
+        <router-link to="/facturacionelectronica" class="nav-item" active-class="nav-item-active">
+            <i class="ti ti-receipt"></i>
+            Facturación electrónica
+        </router-link>
+
+        <router-link to="/suscripciones" class="nav-item" active-class="nav-item-active">
+            <i class="ti ti-star"></i>
+            Suscripciones
+        </router-link>
+
+        <router-link to="/configuracion" class="nav-item" active-class="nav-item-active">
+            <i class="ti ti-settings"></i>
+            Configuración
+        </router-link>
+ 
+        <div class="nav-item" style="margin-top: 20px;color:rgba(255, 100, 100, .7)">
+            <i class="ti ti-logout">
+               
+            </i>
+            Cerra sesión
+        </div>
+
     </nav>
 
 </template>
@@ -130,7 +163,7 @@
 
 .sidebar-section {
     padding: 10px 18px 3px;
-    font-size: 10px;
+    font-size: 10.5px;
     color: rgba(255, 255, 255, .3);
     text-transform: uppercase;
     letter-spacing: 1px;

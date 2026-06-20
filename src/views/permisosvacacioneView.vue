@@ -165,7 +165,7 @@ function denegarPermisos(id) {
             
                     <div class="form-group">
                         <label class="form-label">Observaciones *</label>
-                        <input  class="form-control" v-model="form.cargo"  rows="2" placeholder="Motivo o notas adicionales" />
+                        <textarea  class="form-control" rows="4" cols="50" placeholder="Motivo o notas adicionales..."></textarea>
                     </div>
             </div>
             <div class="modal-footer">
