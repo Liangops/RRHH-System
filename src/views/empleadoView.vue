@@ -7,9 +7,18 @@ const form = reactive({})
 
 const empleados = ref([
     {
-        id: 2,
+        id: 1,
         nombre: 'José Andrés Abreu',
         cedula: '40209666946',
+        cargo: 'CEO',
+        departamento: 'Administración Corporativa',
+        ingreso: '10/10/2023',
+        estado: 'Activo'
+    },
+    {
+        id: 3,
+        nombre: 'Aranza Maria Fermín',
+        cedula: '00000000000',
         cargo: 'CEO',
         departamento: 'Administración Corporativa',
         ingreso: '10/10/2023',

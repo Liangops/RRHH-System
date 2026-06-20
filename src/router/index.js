@@ -5,6 +5,7 @@ import departamentoView from "../views/departamentoView.vue";
 import expedienteView from "../views/expedienteView.vue"
 import permisosvacacioneView from "../views/permisosvacacioneView.vue";
 import asistenciaView from "../views/asistenciaView.vue";
+import nominaView from "../views/nominaView.vue";
 
 const routes = [
     {
@@ -40,12 +41,13 @@ const routes = [
         name: 'asistencia',
         component: asistenciaView
     },
-    /*
+    
     {
         path: '/nomina',
         name: 'nomina',
-        component: departamentoView
+        component: nominaView
     },
+    /*
     {
         path: '/capacitaciones',
         name: 'capacitaciones',

@@ -5,56 +5,24 @@ const modalAbierto = ref(false)
 const modalTipo = ref('')
 const form = reactive({})
 
-const expedientes = ref([
+const nominapersonal = ref([
     {
         nombre: 'José Andrés Abreu',
-        fechacreacion: '10/10/2023',
-        documentos: '10',
-        observaciones: 'Sin Observaciones',
-        estado: 'Activo',
+        salarioBase: 'RD$280,000.00',  
+        horasExtras: 'RD$45,000.00',
+        deducciones: 'RD$91,248.00',
+        salarioNeto: 'RD$233,752.00',
+        estado: 'Pagado'
     },
-
     {
-        nombre: 'Aranza Maria Fermin',
-        fechacreacion: '10/10/2023',
-        documentos: '10',
-        observaciones: 'Mi amiga más intima',
-        estado: 'Inactivo',
-    }
+        nombre: 'Aranza Maria Fermín',
+        salarioBase: 'RD$30,000.00',  
+        horasExtras: 'RD$0.00',
+        deducciones: 'RD$11,695.36',
+        salarioNeto: 'RD$18,304.64',
+        estado: 'Pago Pendiente'
+    },
 ])
-
-function openModal(tipo) {
-    modalTipo.value = tipo
-    Object.keys(form).forEach(k => delete form[k])
-    modalAbierto.value = true
-}
-
-function closeModal() {
-    modalAbierto.value = false
-}
-
-function agregarDocumento(expediente) {
-    Object.assign(form, { ...expediente })
-    modalTipo.value = 'expediente'
-    modalAbierto.value = true
-}
-
-function guardarExpediente() {
-    if (form.id) {
-        // Editar existente
-        const index = expedientes.value.findIndex(e => e.nombre === form.nombre)
-        if (index !== -1) {
-            expedientes.value[index] = { ...form }
-        }
-    } else {
-        // Crear nuevo
-        const nuevoId = expedientes.value.length
-            ? Math.max(...expedientes.value.map(e => e.nombre)) + 1
-            : 1
-        expedientes.value.push({ ...form, nombre: nuevoId })
-    }
-    closeModal()
-}
 
 
 </script>
@@ -66,106 +34,67 @@ function guardarExpediente() {
         <!-- Header -->
         <div class="page-header">
             <div>
-                <div class="page-title">Expedientes</div>
-                <div class="page-subtitle">Historial administrativo por empleado</div>
+                <div class="page-title">Nómina</div>
+                <div class="page-subtitle">Gestión salarial del personal - Junio 2026</div>
             </div>
             
         </div>
 
-        
-
-       
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stats-card">
+                <div class="stat-label">Total nómina (jun.)</div>
+                <div class="stat-value">US$0</div>
+            </div>
+            <div class="stats-card">
+                <div class="stat-label">Empleados Procesados</div>
+                <div class="stat-value">0</div>
+            </div>
+            <div class="stats-card">
+                <div class="stat-label">Deducciones</div>
+                <div class="stat-value">0</div>
+            </div>
+        </div>
 
         <!-- Tabla -->
         <div class="card">
             <div class="card-header">
-                <span class="card-title">Listado de departamentos</span>
-                
+                <span class="card-title">Listado de empleados por nomina</span>
             </div>
-            <div class="search-bar">
-                <i class="ti ti-search"></i>
-                <input type="text" placeholder="Buscar por nombre o cédula" />
-            </div>
+            
             <table>
                 <thead>
                     <tr>
                         <th>Empleado</th>
-                        <th>Fecha creación</th>
-                        <th>Documentos</th>
-                        <th>Observaciones</th>
+                        <th>Salario base</th>
+                        <th>Horas extras</th>
+                        <th>Deducciones</th>
+                        <th>Salario Neto</th>
                         <th>Estado</th>
-
-                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="exp in expedientes">
-                        <td>{{ exp.nombre }}</td>
-                        <td>{{ exp.fechacreacion }}</td>
-                        <td>{{ exp.documentos }}</td>
-                        <td>{{ exp.observaciones }}</td>
+                    <tr v-for="nomina in nominapersonal" :key="nomina.nombre">
+                        <td>{{ nomina.nombre }}</td>
+                        <td>{{ nomina.salarioBase }}</td>
+                        <td>{{ nomina.horasExtras}}</td>
+                        <td>{{ nomina.deducciones}}</td>
+                        <td>{{ nomina.salarioNeto}}</td>
+                       
                         <td>
-                            <span class="badge" :class="exp.estado === 'Activo' ? 'badge-success' : 'badge-warning'">
-                                {{ exp.estado }}
+                            <span class="badge" :class="nomina.estado === 'Pagado' ? 'badge-success' : 'badge-warning'">
+                                {{ nomina.estado }}
                             </span>
                         </td>
-                        <td class="td-actions">
-                            <button class="btn-icon" @click="agregarDocumento(expediente)" title="Agregar otro documento">
-                                <i class="ti ti-upload"></i>
-                            </button>
-                            
-                        </td>
+                    
                     </tr>
+                    
                 </tbody>
             </table>
         </div>
     </main>
 
-    <!-- Modal -->
-    <div v-if="modalAbierto" class="modal-backdrop" @click.self="closeModal">
-        <div class="modal">
-            <div class="modal-header">
-                <span class="modal-title">{{ form.id ? 'Editar expediente' : 'Agregar documento' }}</span>
-                <button class="modal-close" @click="closeModal">
-                    <i class="ti ti-x"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-            
-                    <div class="form-group">
-                        <label class="form-label">Nombre del documento *</label>
-                        <input class="form-control" v-model="form.nombre" placeholder="Ej: 10583" />
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Categoria *</label>
-                        <select class="form-control">
-                            <option value="">Política</option>
-                            <option value="">Reglamento</option>
-                            <option value="">Manual</option>
-                            <option value="">Procedimiento</option>
-                            <option value="">FAQ</option>
-                        </select>
-          
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Archivo *</label>
-                        <input type="file" class="form-control" />
-                    </div>
-                    
-                </div>
-                
-                    
-                
-            </div>
-            <div class="modal-footer">
-                <button class="btn" @click="closeModal">Cancelar</button>
-                <button class="btn btn-primary" @click="guardarExpediente">
-                    <i class="ti ti-device-floppy"></i> Guardar
-                </button>
-            </div>
-        </div>
-    </div>
+   
 </template>
 
 <style>

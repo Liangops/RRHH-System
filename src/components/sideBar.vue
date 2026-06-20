@@ -62,6 +62,7 @@
 .nav-item-active {
     background: rgba(91, 196, 160, .13);
     color: #5bc4a0;
+    border-left: 30px solid #5bc4a0;
 }
 
 .nav {

@@ -31,6 +31,16 @@ function aprobarPermisos(empleado) {
     // codigo para aprobar al empleado
 }
 
+function openModal(tipo) {
+    modalTipo.value = tipo
+    Object.keys(form).forEach(k => delete form[k])
+    modalAbierto.value = true
+}
+
+function closeModal() {
+    modalAbierto.value = false
+}
+
 
 
 function denegarPermisos(id) {
@@ -110,7 +120,7 @@ function denegarPermisos(id) {
     <div v-if="modalAbierto" class="modal-backdrop" @click.self="closeModal">
         <div class="modal">
             <div class="modal-header">
-                <span class="modal-title">{{ form.id ? 'Editar empleado' : 'Registrar empleado' }}</span>
+                <span class="modal-title">{{ form.id ? 'Editar empleado' : 'Registrar Permiso' }}</span>
                 <button class="modal-close" @click="closeModal">
                     <i class="ti ti-x"></i>
                 </button>
