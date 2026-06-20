@@ -1,11 +1,18 @@
 <script setup>
-import NavBar from './components/navbar.vue'
-import TopBar from './components/topbar.vue'
+import SideBar from './components/sideBar.vue'
+import TopBar from './components/topBar.vue'
+
 </script>
 
 <template>
-  <TopBar/>
-  <NavBar/>
+<TopBar/>
 
+<div class="layout">
+  <SideBar/>
+  <main class="content">
+    <router-view/>
+    
+  </main>
+</div>
 
 </template>

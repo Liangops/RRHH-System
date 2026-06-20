@@ -1,0 +1,549 @@
+<script setup>
+import { ref, reactive } from 'vue'
+
+const modalAbierto = ref(false)
+const modalTipo = ref('')
+const form = reactive({})
+
+const empleados = ref([
+    {
+        id: 2,
+        nombre: 'José Andrés Abreu',
+        cedula: '40209666946',
+        cargo: 'CEO',
+        departamento: 'Administración Corporativa',
+        ingreso: '10/10/2023',
+        estado: 'Activo'
+    }
+])
+
+function openModal(tipo) {
+    modalTipo.value = tipo
+    Object.keys(form).forEach(k => delete form[k])
+    modalAbierto.value = true
+}
+
+function closeModal() {
+    modalAbierto.value = false
+}
+
+function editarEmpleado(empleado) {
+    Object.assign(form, { ...empleado })
+    modalTipo.value = 'empleado'
+    modalAbierto.value = true
+}
+
+function verEmpleado(empleado) {
+    console.log('Ver:', empleado)
+}
+
+function eliminarEmpleado(id) {
+    if (confirm('¿Estás seguro de que deseas eliminar este empleado?')) {
+        empleados.value = empleados.value.filter(e => e.id !== id)
+    }
+}
+
+function guardarEmpleado() {
+    if (form.id) {
+        // Editar existente
+        const index = empleados.value.findIndex(e => e.id === form.id)
+        if (index !== -1) {
+            empleados.value[index] = { ...form }
+        }
+    } else {
+        // Crear nuevo
+        const nuevoId = empleados.value.length
+            ? Math.max(...empleados.value.map(e => e.id)) + 1
+            : 1
+        empleados.value.push({ ...form, id: nuevoId })
+    }
+    closeModal()
+}
+</script>
+
+<template>
+    <!-- Contenido Principal -->
+    <main class="main" id="main-content">
+
+        <!-- Header -->
+        <div class="page-header">
+            <div>
+                <div class="page-title">Empleados</div>
+                <div class="page-subtitle">Gestión del personal registrado en el sistema</div>
+            </div>
+            <button class="btn btn-primary" @click="openModal('empleado')">
+                <i class="ti ti-plus"></i>
+                Nuevo Empleado
+            </button>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stats-card">
+                <div class="stat-label">Total Empleados</div>
+                <div class="stat-value">{{ empleados.length }}</div>
+                <div class="stat-sub">Registrados en el sistema</div>
+            </div>
+            <div class="stats-card">
+                <div class="stat-label">Empleados Activos</div>
+                <div class="stat-value">{{ empleados.filter(e => e.estado === 'Activo').length }}</div>
+                <div class="stat-sub">En nómina activa</div>
+            </div>
+            <div class="stats-card">
+                <div class="stat-label">En Permiso o Vacaciones</div>
+                <div class="stat-value">{{ empleados.filter(e => e.estado === 'En permiso').length }}</div>
+                <div class="stat-sub">Permisos o Vacaciones aprobadas</div>
+            </div>
+            <div class="stats-card">
+                <div class="stat-label">Nuevos este mes</div>
+                <div class="stat-value">1</div>
+                <div class="stat-sub">Ingresos recientes</div>
+            </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Listado de empleados</span>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-sm">
+                        <i class="ti ti-download"></i>
+                        Exportar
+                    </button>
+                </div>
+            </div>
+            <div class="search-bar">
+                <i class="ti ti-search"></i>
+                <input type="text" placeholder="Buscar por nombre, cédula o cargo" />
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Cédula</th>
+                        <th>Cargo</th>
+                        <th>Departamento</th>
+                        <th>Fecha de ingreso</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="empleado in empleados" :key="empleado.id">
+                        <td>{{ empleado.nombre }}</td>
+                        <td>{{ empleado.cedula }}</td>
+                        <td>{{ empleado.cargo }}</td>
+                        <td>{{ empleado.departamento }}</td>
+                        <td>{{ empleado.ingreso }}</td>
+                        <td>
+                            <span class="badge" :class="empleado.estado === 'Activo' ? 'badge-success' : 'badge-warning'">
+                                {{ empleado.estado }}
+                            </span>
+                        </td>
+                        <td class="td-actions">
+                            <button class="btn-icon" @click="editarEmpleado(empleado)" title="Editar">
+                                <i class="ti ti-edit"></i>
+                            </button>
+                            <button class="btn-icon" @click="verEmpleado(empleado)" title="Ver detalle">
+                                <i class="ti ti-eye"></i>
+                            </button>
+                            <button class="btn-icon" @click="eliminarEmpleado(empleado.id)" title="Eliminar">
+                                <i class="ti ti-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr v-if="empleados.length === 0">
+                        <td colspan="7" style="text-align:center; color:#9ca3af; padding: 24px;">
+                            No hay empleados registrados.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Modal -->
+    <div v-if="modalAbierto" class="modal-backdrop" @click.self="closeModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">{{ form.id ? 'Editar empleado' : 'Registrar empleado' }}</span>
+                <button class="modal-close" @click="closeModal">
+                    <i class="ti ti-x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Nombre *</label>
+                        <input class="form-control" v-model="form.nombre" placeholder="Ej: José" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Apellido *</label>
+                        <input class="form-control" v-model="form.apellido" placeholder="Ej: Fermín" />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Cédula *</label>
+                        <input class="form-control" v-model="form.cedula" placeholder="001-0000000-0" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Teléfono</label>
+                        <input class="form-control" v-model="form.telefono" placeholder="809-000-0000" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Correo electrónico *</label>
+                    <input class="form-control" v-model="form.correo" placeholder="correo@grupom.com.do" />
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Cargo *</label>
+                        <input class="form-control" v-model="form.cargo" placeholder="Ej: CEO" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Departamento *</label>
+                        <select class="form-control" v-model="form.departamento">
+                            <option value="">Seleccionar…</option>
+                            <option>Recursos Humanos</option>
+                            <option>Tecnología</option>
+                            <option>Suministros</option>
+                            <option>Legal</option>
+                            <option>Finanzas</option>
+                            <option>Administración Corporativa</option>
+                            <option>Dirección Corporativa</option>
+                            <option>Ingeniería Corporativa</option>
+                            <option>Auditoría Interna</option>
+                            <option>Compliance</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Fecha de ingreso</label>
+                        <input type="date" class="form-control" v-model="form.ingreso" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Estado</label>
+                        <select class="form-control" v-model="form.estado">
+                            <option>Activo</option>
+                            <option>Inactivo</option>
+                            <option>En permiso</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" @click="closeModal">Cancelar</button>
+                <button class="btn btn-primary" @click="guardarEmpleado">
+                    <i class="ti ti-device-floppy"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<style>
+
+.main {
+    flex: 1;
+    margin-left: 218px;
+    padding: 28px 28px 60px;
+}
+
+body {
+    font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    background: #f0f2f5;
+    color: #1a1a2e;
+}
+
+.page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.page-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a2e;
+}
+
+.page-subtitle {
+    font-size: 13px;
+    color: #6b7280;
+    margin-top: 3px;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    color: #374151;
+    font-family: inherit;
+    transition: all .15s;
+}
+
+.btn-primary {
+    background: #1a3c5e;
+    color: #fff;
+    border-color: #1a3c5e;
+}
+
+.btn-primary:hover {
+    background: #1d4570;
+}
+
+.btn-sm {
+    padding: 5px 11px;
+    font-size: 12px;
+}
+
+.btn-icon {
+    padding: 5px 7px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: #6b7280;
+    font-size: 16px;
+    border-radius: 6px;
+}
+
+.btn-icon:hover {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.stats-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px 18px;
+    border: 1px solid #e5e7eb;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1a1a2e;
+}
+
+.stat-sub {
+    font-size: 11px;
+    color: #9ca3af;
+    margin-top: 3px;
+}
+
+.card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 18px;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a2e;
+}
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 7px 12px;
+    margin-bottom: 16px;
+}
+
+.search-bar input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 13px;
+    color: #374151;
+    width: 100%;
+    font-family: inherit;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+}
+
+th {
+    text-align: left;
+    padding: 12px 12px;
+    color: #6b7280;
+    font-weight: 500;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 12px;
+    background: #f9fafb;
+}
+
+td {
+    padding: 10px 12px;
+    color: #374151;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: middle;
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+tr:hover td {
+    background: #fafafa;
+}
+
+.td-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.badge-success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge-warning {
+    background: #fef9c3;
+    color: #854d0e;
+}
+
+/* Modal */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+.modal {
+    background: #fff;
+    border-radius: 14px;
+    width: 460px;
+    max-width: 95vw;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .2);
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1a2e;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #9ca3af;
+    font-size: 22px;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: #374151;
+}
+
+.modal-body {
+    padding: 22px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.modal-footer {
+    padding: 16px 22px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.form-control {
+    width: 100%;
+    padding: 8px 11px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #fff;
+    color: #1a1a2e;
+    font-size: 13px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color .15s;
+}
+
+.form-control:focus {
+    border-color: #1a3c5e;
+    box-shadow: 0 0 0 3px rgba(26, 60, 94, .08);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+</style>
