@@ -1,62 +1,102 @@
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 
 const modalAbierto = ref(false)
-const modalTipo = ref('')
-const form = reactive({})
+const modalVerAbierto = ref(false)
+const form = reactive({ archivos: [] })
+const empleados = ref([])
+const expedientes = ref([])
+const expedienteSeleccionado = ref(null)
+const expedienteViendo = ref(null)
 
-const expedientes = ref([
-    {
-        nombre: 'José Andrés Abreu',
-        fechacreacion: '10/10/2023',
-        documentos: '10',
-        observaciones: 'Sin Observaciones',
-        estado: 'Activo',
-    },
+onMounted(async () => {
+  try {
+    const [resEmp, resExp] = await Promise.all([
+      fetch('/api/empleados'),
+      fetch('/api/expedientes')
+    ])
+    empleados.value = await resEmp.json()
+    expedientes.value = await resExp.json()
+  } catch (err) {
+    console.error('Error cargando datos:', err)
+  }
+})
 
-    {
-        nombre: 'Aranza Maria Fermin',
-        fechacreacion: '10/10/2023',
-        documentos: '10',
-        observaciones: 'Mi amiga más intima',
-        estado: 'Inactivo',
-    }
-])
-
-function openModal(tipo) {
-    modalTipo.value = tipo
-    Object.keys(form).forEach(k => delete form[k])
-    modalAbierto.value = true
+// Obtener cantidad de documentos de un empleado
+function cantidadDocumentos(empleadoId) {
+  const exp = expedientes.value.find(e => e.empleadoId === empleadoId || e.empleadoId?._id === empleadoId)
+  return exp?.documentos?.length ?? 0
 }
 
 function closeModal() {
-    modalAbierto.value = false
+  modalAbierto.value = false
 }
 
-function agregarDocumento(expediente) {
-    Object.assign(form, { ...expediente })
-    modalTipo.value = 'expediente'
-    modalAbierto.value = true
+function agregarDocumento(empleado) {
+  expedienteSeleccionado.value = empleado
+  Object.keys(form).forEach(k => delete form[k])
+  form.archivos = []
+  modalAbierto.value = true
 }
 
-function guardarExpediente() {
-    if (form.id) {
-        // Editar existente
-        const index = expedientes.value.findIndex(e => e.nombre === form.nombre)
-        if (index !== -1) {
-            expedientes.value[index] = { ...form }
-        }
-    } else {
-        // Crear nuevo
-        const nuevoId = expedientes.value.length
-            ? Math.max(...expedientes.value.map(e => e.nombre)) + 1
-            : 1
-        expedientes.value.push({ ...form, nombre: nuevoId })
-    }
+function verExpediente(empleado) {
+  const exp = expedientes.value.find(e => 
+    e.empleadoId === empleado._id || e.empleadoId?._id === empleado._id
+  )
+  expedienteViendo.value = {
+    empleado,
+    documentos: exp?.documentos ?? []
+  }
+  modalVerAbierto.value = true
+}
+
+function descargarDoc(doc) {
+  console.log('DOC:', doc)
+  const url = `/api/expedientes/download?url=${encodeURIComponent(doc.ruta)}&nombre=${encodeURIComponent(doc.nombre)}`
+  window.open(url, '_blank')
+}
+
+function eliminarArchivo(index) {
+  form.archivos.splice(index, 1)
+}
+
+function onFileChange(e) {
+  const seleccionados = Array.from(e.target.files)
+  const invalidos = seleccionados.filter(f => f.type !== 'application/pdf')
+
+  if (invalidos.length > 0) {
+    alert('Solo se permiten archivos PDF')
+    e.target.value = ''
+    form.archivos = []
+    return
+  }
+
+  form.archivos = seleccionados
+}
+
+async function guardarExpediente() {
+  if (!form.archivos?.length) {
+    alert('Debes seleccionar al menos un PDF')
+    return
+  }
+
+  const data = new FormData()
+  data.append('nombre', form.nombre)
+  data.append('categoria', form.categoria)
+  form.archivos.forEach(file => data.append('documentos', file))
+
+  const res = await fetch(`/api/expedientes/${expedienteSeleccionado.value._id}/documentos`, {
+    method: 'POST',
+    body: data
+  })
+
+  if (res.ok) {
+    // Recargar expedientes para actualizar el contador
+    const resExp = await fetch('/api/expedientes')
+    expedientes.value = await resExp.json()
     closeModal()
+  }
 }
-
-
 </script>
 
 <template>
@@ -69,18 +109,12 @@ function guardarExpediente() {
                 <div class="page-title">Expedientes</div>
                 <div class="page-subtitle">Historial administrativo por empleado</div>
             </div>
-            
         </div>
-
-        
-
-       
 
         <!-- Tabla -->
         <div class="card">
             <div class="card-header">
-                <span class="card-title">Listado de departamentos</span>
-                
+                <span class="card-title">Listado de empleados</span>
             </div>
             <div class="search-bar">
                 <i class="ti ti-search"></i>
@@ -90,30 +124,36 @@ function guardarExpediente() {
                 <thead>
                     <tr>
                         <th>Empleado</th>
-                        <th>Fecha creación</th>
+                        <th>Fecha ingreso</th>
                         <th>Documentos</th>
                         <th>Observaciones</th>
                         <th>Estado</th>
-
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="exp in expedientes">
-                        <td>{{ exp.nombre }}</td>
-                        <td>{{ exp.fechacreacion }}</td>
-                        <td>{{ exp.documentos }}</td>
-                        <td>{{ exp.observaciones }}</td>
+                    <tr v-for="emp in empleados" :key="emp._id">
+                        <td>{{ emp.nombre }} {{ emp.apellido }}</td>
+                        <td>{{ emp.ingreso }}</td>
+                        <td>{{ cantidadDocumentos(emp._id) }}</td>
+                        <td>{{ emp.observaciones ?? 'Sin observaciones' }}</td>
                         <td>
-                            <span class="badge" :class="exp.estado === 'Activo' ? 'badge-success' : 'badge-warning'">
-                                {{ exp.estado }}
+                            <span class="badge" :class="emp.estado === 'Activo' ? 'badge-success' : 'badge-warning'">
+                                {{ emp.estado }}
                             </span>
                         </td>
                         <td class="td-actions">
-                            <button class="btn-icon" @click="agregarDocumento(expediente)" title="Agregar otro documento">
+                            <button class="btn-icon" @click="agregarDocumento(emp)" title="Agregar documento">
                                 <i class="ti ti-upload"></i>
                             </button>
-                            
+                            <button class="btn-icon" @click="verExpediente(emp)" title="Ver expediente">
+                                <i class="ti ti-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr v-if="empleados.length === 0">
+                        <td colspan="6" style="text-align:center; color:#9ca3af; padding:24px">
+                            No hay empleados registrados.
                         </td>
                     </tr>
                 </tbody>
@@ -121,48 +161,99 @@ function guardarExpediente() {
         </div>
     </main>
 
-    <!-- Modal -->
+    <!-- Modal: Agregar documento -->
     <div v-if="modalAbierto" class="modal-backdrop" @click.self="closeModal">
         <div class="modal">
             <div class="modal-header">
-                <span class="modal-title">{{ form.id ? 'Editar expediente' : 'Agregar documento' }}</span>
+                <span class="modal-title">Agregar documento — {{ expedienteSeleccionado?.nombre }}</span>
                 <button class="modal-close" @click="closeModal">
                     <i class="ti ti-x"></i>
                 </button>
             </div>
             <div class="modal-body">
-            
-                    <div class="form-group">
-                        <label class="form-label">Nombre del documento *</label>
-                        <input class="form-control" v-model="form.nombre" placeholder="Ej: 10583" />
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Categoria *</label>
-                        <select class="form-control">
-                            <option value="">Política</option>
-                            <option value="">Reglamento</option>
-                            <option value="">Manual</option>
-                            <option value="">Procedimiento</option>
-                            <option value="">FAQ</option>
-                        </select>
-          
+                <div class="form-group">
+                    <label class="form-label">Nombre del documento *</label>
+                    <input class="form-control" v-model="form.nombre" placeholder="Ej: Contrato 2024" />
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Archivo *</label>
-                        <input type="file" class="form-control" />
-                    </div>
-                    
+                <div class="form-group">
+                    <label class="form-label">Categoría *</label>
+                    <select class="form-control" v-model="form.categoria">
+                        <option value="">Seleccionar categoría</option>
+                        <option value="Política">Política</option>
+                        <option value="Reglamento">Reglamento</option>
+                        <option value="Manual">Manual</option>
+                        <option value="Procedimiento">Procedimiento</option>
+                        <option value="FAQ">FAQ</option>
+                        <option value="Contrato">Contrato</option>
+                    </select>
                 </div>
-                
-                    
-                
+                <div class="form-group">
+                    <label class="form-label">
+                        Archivos PDF *
+                        <span style="color:#6b7280; font-weight:400">(puedes seleccionar varios)</span>
+                    </label>
+                    <input type="file" class="form-control" accept=".pdf,application/pdf" multiple @change="onFileChange" />
+                    <div v-if="form.archivos?.length" style="margin-top:8px; display:flex; flex-direction:column; gap:4px">
+                        <div
+                            v-for="(f, i) in form.archivos"
+                            :key="f.name"
+                            style="display:flex; align-items:center; justify-content:space-between; font-size:12px; color:#6b7280; background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px; padding:5px 10px"
+                        >
+                            <span>📄 {{ f.name }}</span>
+                            <button @click="eliminarArchivo(i)" style="background:none; border:none; cursor:pointer; color:#9ca3af">
+                                <i class="ti ti-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn" @click="closeModal">Cancelar</button>
                 <button class="btn btn-primary" @click="guardarExpediente">
                     <i class="ti ti-device-floppy"></i> Guardar
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Ver documentos -->
+    <div v-if="modalVerAbierto" class="modal-backdrop" @click.self="modalVerAbierto = false">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">
+                    Expediente — {{ expedienteViendo?.empleado?.nombre }} {{ expedienteViendo?.empleado?.apellido }}
+                </span>
+                <button class="modal-close" @click="modalVerAbierto = false">
+                    <i class="ti ti-x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div v-if="expedienteViendo?.documentos?.length === 0"
+                     style="text-align:center; color:#9ca3af; padding:24px">
+                    Este empleado no tiene documentos aún.
+                </div>
+                <div
+                    v-for="doc in expedienteViendo?.documentos"
+                    :key="doc._id"
+                    style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border:1px solid #e5e7eb; border-radius:8px; margin-bottom:8px"
+                >
+                    <div>
+                        <div style="font-size:13px; font-weight:500; color:#1a1a2e">
+                            <i class="ti ti-file-description" style="font-size:15px;">
+                                
+                            </i>
+                             {{ doc.nombre }}</div>
+                        <div style="font-size:11px; color:#6b7280; margin-top:2px">
+                            {{ doc.categoria }} · {{ new Date(doc.fechaSubida).toLocaleDateString() }}
+                        </div>
+                    </div>
+                    <button @click="descargarDoc(doc)" class="btn btn-sm">
+                       <i class="ti ti-download"></i> Descargar
+                       </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" @click="modalVerAbierto = false">Cerrar</button>
             </div>
         </div>
     </div>

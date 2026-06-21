@@ -109,7 +109,7 @@ async function guardarEmpleado() {
             </div>
             <div class="stats-card">
                 <div class="stat-label">Nuevos este mes</div>
-                <div class="stat-value">1</div>
+                <div class="stat-value">{{ empleados.length }}</div>
                 <div class="stat-sub">Ingresos recientes</div>
             </div>
         </div>
