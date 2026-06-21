@@ -194,6 +194,9 @@
     cursor: pointer;
     transition: border-color .15s, box-shadow .15s;
 }
+.report-card i {
+    font-size: 20px;
+}
 
 .report-card:hover { 
     border-color: #1a3c5e; 

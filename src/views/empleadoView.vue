@@ -1,72 +1,76 @@
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
+
+const API = '/api/empleados'
 
 const modalAbierto = ref(false)
 const modalTipo = ref('')
 const form = reactive({})
+const cargando = ref(false)
 
-const empleados = ref([
-    {
-        id: 1,
-        nombre: 'José Andrés Abreu',
-        cedula: '40209666946',
-        cargo: 'CEO',
-        departamento: 'Administración Corporativa',
-        ingreso: '10/10/2023',
-        estado: 'Activo'
-    },
-    {
-        id: 3,
-        nombre: 'Aranza Maria Fermín',
-        cedula: '00000000000',
-        cargo: 'CEO',
-        departamento: 'Administración Corporativa',
-        ingreso: '10/10/2023',
-        estado: 'Activo'
-    }
-])
+const empleados = ref([])  // ← Ya no hardcodeado
 
+// ─── Cargar empleados al montar ───────────────────────────
+onMounted(async () => {
+  cargando.value = true
+  const res = await fetch(API)
+  empleados.value = await res.json()
+  cargando.value = false
+})
+
+// ─── Modal ────────────────────────────────────────────────
 function openModal(tipo) {
-    modalTipo.value = tipo
-    Object.keys(form).forEach(k => delete form[k])
-    modalAbierto.value = true
+  modalTipo.value = tipo
+  Object.keys(form).forEach(k => delete form[k])
+  modalAbierto.value = true
 }
 
 function closeModal() {
-    modalAbierto.value = false
+  modalAbierto.value = false
 }
 
 function editarEmpleado(empleado) {
-    Object.assign(form, { ...empleado })
-    modalTipo.value = 'empleado'
-    modalAbierto.value = true
+  // MongoDB usa _id, no id
+  Object.assign(form, { ...empleado })
+  modalTipo.value = 'empleado'
+  modalAbierto.value = true
 }
 
 function verEmpleado(empleado) {
-    console.log('Ver:', empleado)
+  console.log('Ver:', empleado)
 }
 
-function eliminarEmpleado(id) {
-    if (confirm('¿Estás seguro de que deseas eliminar este empleado?')) {
-        empleados.value = empleados.value.filter(e => e.id !== id)
-    }
+// ─── Eliminar ─────────────────────────────────────────────
+async function eliminarEmpleado(id) {
+  if (!confirm('¿Estás seguro de que deseas eliminar este empleado?')) return
+
+  await fetch(`${API}/${id}`, { method: 'DELETE' })
+  // Quitar de la lista sin recargar
+  empleados.value = empleados.value.filter(e => e._id !== id)
 }
 
-function guardarEmpleado() {
-    if (form.id) {
-        // Editar existente
-        const index = empleados.value.findIndex(e => e.id === form.id)
-        if (index !== -1) {
-            empleados.value[index] = { ...form }
-        }
-    } else {
-        // Crear nuevo
-        const nuevoId = empleados.value.length
-            ? Math.max(...empleados.value.map(e => e.id)) + 1
-            : 1
-        empleados.value.push({ ...form, id: nuevoId })
-    }
-    closeModal()
+// ─── Guardar (crear o editar) ─────────────────────────────
+async function guardarEmpleado() {
+  const esEdicion = !!form._id  // MongoDB usa _id
+
+  const res = await fetch(esEdicion ? `${API}/${form._id}` : API, {
+    method: esEdicion ? 'PUT' : 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(form)
+  })
+
+  const empleadoGuardado = await res.json()
+
+  if (esEdicion) {
+    // Actualizar en la lista local
+    const index = empleados.value.findIndex(e => e._id === form._id)
+    if (index !== -1) empleados.value[index] = empleadoGuardado
+  } else {
+    // Agregar el nuevo a la lista
+    empleados.value.push(empleadoGuardado)
+  }
+
+  closeModal()
 }
 </script>
 
@@ -138,7 +142,7 @@ function guardarEmpleado() {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="empleado in empleados" :key="empleado.id">
+                    <tr v-for="empleado in empleados" :key="empleado._id">
                         <td>{{ empleado.nombre }}</td>
                         <td>{{ empleado.cedula }}</td>
                         <td>{{ empleado.cargo }}</td>
@@ -156,7 +160,7 @@ function guardarEmpleado() {
                             <button class="btn-icon" @click="verEmpleado(empleado)" title="Ver detalle">
                                 <i class="ti ti-eye"></i>
                             </button>
-                            <button class="btn-icon" @click="eliminarEmpleado(empleado.id)" title="Eliminar">
+                            <button class="btn-icon" @click="eliminarEmpleado(empleado._id)" title="Eliminar">
                                 <i class="ti ti-trash"></i>
                             </button>
                         </td>
@@ -175,7 +179,7 @@ function guardarEmpleado() {
     <div v-if="modalAbierto" class="modal-backdrop" @click.self="closeModal">
         <div class="modal">
             <div class="modal-header">
-                <span class="modal-title">{{ form.id ? 'Editar empleado' : 'Registrar empleado' }}</span>
+                <span class="modal-title">{{ form._id ? 'Editar empleado' : 'Registrar empleado' }}</span>
                 <button class="modal-close" @click="closeModal">
                     <i class="ti ti-x"></i>
                 </button>

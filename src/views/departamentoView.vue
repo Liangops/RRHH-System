@@ -1,73 +1,68 @@
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
+
+const API = '/api/departamentos'
 
 const modalAbierto = ref(false)
 const modalTipo = ref('')
 const form = reactive({})
+const cargando = ref(false)
 
-const departamentos = ref([
-    {
-        codigo: '10001',
-        nombre: 'Administración corporativa',
-        descripcion: 'Administrar la compañia',
-        empleados: '7',
-    },
+const departamentos = ref([])
 
-    {
-        codigo: '10021',
-        nombre: 'Finanzas',
-        descripcion: 'Administrar las finanzas del corporativo',
-        empleados: '14',
-    },
-
-    {
-        codigo: '10583',
-        nombre: 'Suministros',
-        descripcion: 'Realizar las compras del corporativo',
-        empleados: '4',
-    }
-])
+onMounted(async () => {
+    cargando.value = true
+    const res = await fetch(API)
+    departamentos.value = await res.json()
+    cargando.value = false
+})
 
 function openModal(tipo) {
-    modalTipo.value = tipo
+    modalTipo.value = tipo;
     Object.keys(form).forEach(k => delete form[k])
     modalAbierto.value = true
 }
 
 function closeModal() {
-    modalAbierto.value = false
+    modalAbierto.value = false;
 }
 
 function editarDepartamento(departamento) {
-    Object.assign(form, { ...departamento })
+    Object.assign(form, { ...departamento})
     modalTipo.value = 'departamento'
     modalAbierto.value = true
 }
 
 
 
-function eliminarDepartamento(codigo) {
-    if (confirm('¿Estás seguro de que deseas eliminar este departamento?')) {
-        departamentos.value = departamentos.value.filter(e => e.codigo !== codigo)
-    }
+
+
+// ─── Guardar (crear o editar) ─────────────────────────────
+async function guardarDepartamento() {
+  const esEdicion = !!form._id  // MongoDB usa _id
+
+  const res = await fetch(esEdicion ? `${API}/${form._id}` : API, {
+    method: esEdicion ? 'PUT' : 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(form)
+  })
+
+  const departamentoGuardado = await res.json()
+
+  if (esEdicion) {
+    // Actualizar en la lista local
+
+    const index = departamentos.value.findIndex(e => e._id === form._id)
+    if (index !== -1) departamentos.value[index] = departamentoGuardado
+  } else {
+    // Agregar el nuevo a la lista
+    departamentos.value.push(departamentoGuardado)
+    
+  }
+
+  closeModal()
 }
 
-function guardarDepartamento() {
-    if (form.id) {
-        // Editar existente
-        const index = departamentos.value.findIndex(e => e.codigo === form.codigo)
-        if (index !== -1) {
-            departamentos.value[index] = { ...form }
-        }
-    } else {
-        // Crear nuevo
-        const nuevoId = departamentos.value.length
-            ? Math.max(...departamentos.value.map(e => e.codigo)) + 1
-            : 1
-        departamentos.value.push({ ...form, codigo: nuevoId })
-    }
-    closeModal()
-}
 </script>
 
 <template>
@@ -109,18 +104,21 @@ function guardarDepartamento() {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="dept in departamentos" :key="dept.codigo">
+                    <tr v-for="dept in departamentos" :key="dept._id">
                         <td>{{ dept.codigo }}</td>
                         <td>{{ dept.nombre }}</td>
                         <td>{{ dept.descripcion }}</td>
                         <td>{{ dept.empleados }}</td>
                         <td class="td-actions">
-                            <button class="btn-icon" @click="editarDepartamento(departamento)" title="Editar">
+                            <button class="btn-icon" @click="editarDepartamento(dept)" title="Editar">
                                 <i class="ti ti-edit"></i>
                             </button>
-                            <button class="btn-icon" @click="eliminarDepartamento(dept.codigo)" title="Eliminar">
-                                <i class="ti ti-trash"></i>
-                            </button>
+                           
+                        </td>
+                    </tr>
+                    <tr v-if="departamentos.length == 0">
+                        <td colspan="7" style="text-align:center;color:#9ca3af;padding:24px">
+                            No hay departamentos registrados
                         </td>
                     </tr>
                 </tbody>
@@ -132,7 +130,7 @@ function guardarDepartamento() {
     <div v-if="modalAbierto" class="modal-backdrop" @click.self="closeModal">
         <div class="modal">
             <div class="modal-header">
-                <span class="modal-title">{{ form.id ? 'Editar departamento' : 'Registrar departamento' }}</span>
+                <span class="modal-title">{{ form._id ? 'Editar departamento' : 'Registrar departamento' }}</span>
                 <button class="modal-close" @click="closeModal">
                     <i class="ti ti-x"></i>
                 </button>
@@ -141,17 +139,22 @@ function guardarDepartamento() {
               
                     <div class="form-group">
                         <label class="form-label">Codigo *</label>
-                        <input class="form-control" v-model="form.nombre" placeholder="Ej: 10583" />
+                        <input class="form-control" v-model="form.codigo" placeholder="Ej: 10583" />
                     </div>
                     <div class="form-group">
                         <label class="form-label">Nombre *</label>
-                        <input class="form-control" v-model="form.apellido" placeholder="Ej: Mantenimiento" />
+                        <input class="form-control" v-model="form.nombre" placeholder="Ej: Mantenimiento" />
+
+                </div>
+                <div class="form-group">
+                        <label class="form-label">Empleados *</label>
+                        <input class="form-control" v-model="form.empleados" placeholder="Ej: 12" />
 
                 </div>
         
                     <div class="form-group">
                         <label class="form-label">Descripción *</label>
-                        <textarea  class="form-control" rows="4" cols="50" placeholder="Ej: Administrar el taller"></textarea>
+                        <textarea  class="form-control" v-model="form.descripcion" rows="4" cols="50" placeholder="Ej: Administrar el taller"></textarea>
                     </div>
  
                 
