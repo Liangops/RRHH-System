@@ -1,6 +1,6 @@
 [[redirects]]
   from = "/api/*"
-  to = "rrhh-system-production.up.railway.app"
+  to = "https://rrhh-system-production.up.railway.app/api/:splat"
   status = 200
   force = true
 
