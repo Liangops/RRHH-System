@@ -1,34 +1,97 @@
 x<script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 
 const modalAbierto = ref(false)
 const modalTipo = ref('')
-const form = reactive({})
+const permisoSeleccionado = ref(null)
+const permisos_vacaciones = ref([])
 
-const permisosvacaciones = ref([
-    {
-        nombre: 'José Andrés Abreu',
-        tipo: 'Trabajo',
-        fechaInicio: '13/06/2026',
-        fechaFin: '27/06/2026',
-        dias: '14',
-        estado: 'Aceptado'
-    },
-    {
-        
-        nombre: 'Aranza Maria Fermin',
-        tipo: 'Excusa',
-        fechaInicio: '13/06/2026',
-        fechaFin: '27/06/2026',
-        dias: '14',
-        estado: 'Denagado'
+const form = reactive({ archivos: [] })
+const empleados = ref([])
+
+
+
+
+
+onMounted(async () => {
+    try {
+        const [resEmp, resPer] = await Promise.all([
+            fetch('/api/empleados'),
+            fetch('/api/permisosvacaciones')
+        ])
+        empleados.value = await resEmp.json()
+        permisos_vacaciones.value = await resPer.json()
+    } catch (err) {
+        console.error('Error cargando datos:', err)
     }
-])
+})
 
 
 
-function aprobarPermisos(empleado) {
-    // codigo para aprobar al empleado
+
+async function guardarPermiso() {
+    if (!form.empleado || !form.tipopermiso || !form.fechaIn || !form.fechaFin) {
+        alert('Por favor completa todos los campos')
+        return
+    }
+
+    // Calcular días automáticamente
+    const dias = Math.round(
+        (new Date(form.fechaFin) - new Date(form.fechaIn)) / (1000 * 60 * 60 * 24)
+    )
+
+    const body = {
+        empleadoId: form.empleado,
+        tipoPermiso: form.tipopermiso,
+        fechaInicio: form.fechaIn,
+        fechaFin: form.fechaFin,
+        dias,
+        motivo: form.observaciones
+    }
+
+    const res = await fetch('/api/permisosvacaciones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    })
+
+    if (res.ok) {
+        const resPer = await fetch('/api/permisosvacaciones')
+        permisos_vacaciones.value = await resPer.json()
+        closeModal()
+    }
+}
+
+
+
+
+
+async function aprobarPermisos(permiso) {
+    const res = await fetch(`/api/permisosvacaciones/${permiso._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: 'Aceptado' })
+    })
+
+    if (res.ok) {
+        const resPer = await fetch('/api/permisosvacaciones')
+        permisos_vacaciones.value = await resPer.json()
+    }
+}
+
+async function denegarPermisos(permiso) {
+    if (confirm('¿Estás seguro de que deseas denegar este permiso?')) {
+        const res = await fetch(`/api/permisosvacaciones/${permiso._id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado: 'Denegado' })
+        })
+
+        if (res.ok) {
+            const resPer = await fetch('/api/permisosvacaciones')
+            permisos_vacaciones.value = await resPer.json()
+        }
+    }
 }
 
 function openModal(tipo) {
@@ -43,11 +106,6 @@ function closeModal() {
 
 
 
-function denegarPermisos(id) {
-    if (confirm('¿Estás seguro de que deseas denegar a este empleado?')) {
-        // codigo para denegar al empleado
-    }
-}
 
 
 </script>
@@ -89,26 +147,41 @@ function denegarPermisos(id) {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="permisos in permisosvacaciones" :key="permisosvacaciones.nombre">
-                        <td>{{ permisos.nombre }}</td>
-                        <td>{{ permisos.tipo }}</td>
-                        <td>{{ permisos.fechaInicio }}</td>
-                        <td>{{ permisos.fechaFin }}</td>
+                    <tr v-for="permisos in permisos_vacaciones" :key="permisos._id">
+                        <td>{{ permisos.empleadoId?.nombre }} {{ permisos.empleadoId?.apellido }}</td>
+
+
+                        <td>{{ permisos.tipoPermiso }}</td>
+                        <td>{{ permisos.fechaInicio ? new Date(permisos.fechaInicio).toLocaleDateString('es-DO') : '-' }}</td>
+                        <td>{{ permisos.fechaFin ? new Date(permisos.fechaFin).toLocaleDateString('es-DO') : '-' }}</td>
                         <td>{{ permisos.dias }}</td>
                         <td>
-                            <span class="badge" :class="permisos.estado === 'Aceptado' ? 'badge-success' : 'badge-warning'">
-                                {{ permisos.estado }}
+                            <span class="badge" :class="{
+                                 'badge-success': permisos.estado === 'Aceptado',
+                                 'badge-danger':  permisos.estado === 'Denegado',
+                                 'badge-warning': permisos.estado === 'En revisión'
+                                }">
+                             {{ permisos.estado }}
                             </span>
                         </td>
                         <td class="td-actions">
-                            <button class="btn-icon" @click="aprobarPermisos(permisos)" title="Aprobar">
-                                <i class="ti ti-check"></i>
-                            </button>
-                            <button class="btn-icon" @click="denegarPermisos(permisos)" title="Denegar">
-                                <i class="ti ti-x"></i>
-                            </button>
-                            
-                        </td>
+                      <button 
+                      class="btn-actions" 
+                              @click="aprobarPermisos(permisos)" 
+                              title="Aprobar"
+                              :disabled="permisos.estado === 'Aceptado' || permisos.estado === 'Denegado'"
+                          >
+                              <i class="ti ti-check"></i>
+                          </button>
+                          <button 
+                              class="btn-actions" 
+                              @click="denegarPermisos(permisos)" 
+                              title="Denegar"
+                              :disabled="permisos.estado === 'Aceptado' || permisos.estado === 'Denegado'"
+                          >
+                              <i class="ti ti-x"></i>
+                          </button>
+                      </td>
                     </tr>
                     
                 </tbody>
@@ -120,7 +193,7 @@ function denegarPermisos(id) {
     <div v-if="modalAbierto" class="modal-backdrop" @click.self="closeModal">
         <div class="modal">
             <div class="modal-header">
-                <span class="modal-title">{{ form.id ? 'Editar empleado' : 'Registrar Permiso' }}</span>
+                <span class="modal-title">Registrar solicitud de permisos o vacaciones </span>
                 <button class="modal-close" @click="closeModal">
                     <i class="ti ti-x"></i>
                 </button>
@@ -129,24 +202,27 @@ function denegarPermisos(id) {
                 
                     <div class="form-group">
                         <label class="form-label">Empleado *</label>
-                       <select class="form-control" v-model="form.departamento">
-                            
-                            <option>José Andrés Abreu</option>
-                            <option>Aranza Maria Fermin</option>
-                            
-                         
-                        </select>
+                       <select class="form-control" v-model="form.empleado">
+    <option value="" disabled>Seleccione un empleado</option>
+    <option 
+        v-for="empleado in empleados" 
+        :key="empleado._id" 
+        :value="empleado._id"
+    >
+        {{ empleado.nombre }}
+    </option>
+</select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Tipo de permiso *</label>
-                        <select class="form-control" v-model="form.departamento">
-                            
-                            <option>Vacaciones</option>
-                            <option>Permiso Medico</option>
-                            <option>Permiso personal</option>
-                            <option>Maternidad / Paternidad</option>
-                            <option>Duelo</option>
-                            
+                        <select class="form-control" v-model="form.tipopermiso">
+                            <option value="" disabled>Seleccione un empleado</option>
+                            <option value="Vacaciones">Vacaciones</option>
+                            <option value="Permiso Medico">Permiso Medico</option>
+                            <option value="Permiso Personal">Permiso personal</option>
+                            <option value="Maternidad / Paternidad">Maternidad / Paternidad</option>
+                            <option value="Duelo">Duelo</option>
+                            <option value="Otros">Otros</option>
                          
                         </select>
                   
@@ -154,23 +230,23 @@ function denegarPermisos(id) {
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Fecha inicio * </label>
-                        <input type="date" class="form-control"/>
+                        <input type="date" class="form-control" v-model="form.fechaIn"/>
                     </div>
                 
                 <div class="form-group">
                     <label class="form-label">Fecha fin *</label>
-                    <input type="date" class="form-control"/>
+                    <input type="date" class="form-control" v-model="form.fechaFin"/>
                 </div>
                 </div>  
             
                     <div class="form-group">
                         <label class="form-label">Observaciones *</label>
-                        <textarea  class="form-control" rows="4" cols="50" placeholder="Motivo o notas adicionales..."></textarea>
+                        <textarea  v-model="form.observaciones" class="form-control" rows="4" cols="50" placeholder="Motivo o notas adicionales..."></textarea>
                     </div>
             </div>
             <div class="modal-footer">
                 <button class="btn" @click="closeModal">Cancelar</button>
-                <button class="btn btn-primary" @click="guardarEmpleado">
+                <button class="btn btn-primary" @click="guardarPermiso">
                     <i class="ti ti-device-floppy"></i> Guardar
                 </button>
             </div>
@@ -242,7 +318,7 @@ body {
     font-size: 12px;
 }
 
-.btn-icon {
+.btn-actions {
     padding: 5px 7px;
     border: none;
     background: none;
@@ -252,8 +328,9 @@ body {
     border-radius: 6px;
 }
 
-.btn-icon:hover {
-    background: #f3f4f6;
+.btn-actions:hover {
+    background:  rgba(128, 128, 128, 0.3);
+    border-radius: 50%;
     color: #374151;
 }
 
@@ -383,6 +460,16 @@ tr:hover td {
 .badge-warning {
     background: #fef9c3;
     color: #854d0e;
+}
+
+.badge-danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.btn-icon:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
 }
 
 

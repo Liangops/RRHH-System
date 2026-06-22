@@ -1,24 +1,39 @@
 <script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
+const usuario = ref(null)
+
+const iniciales = computed(() => {
+  if (!usuario.value?.nombre) return '?'
+  return usuario.value.nombre
+    .split(' ')
+    .slice(0, 2)
+    .map(p => p[0])
+    .join('')
+    .toUpperCase()
+})
+
+onMounted(() => {
+  const raw = localStorage.getItem('usuario')
+  if (raw) usuario.value = JSON.parse(raw)
+})
 </script>
 
 <template>
-    
-    <header class="topbar">
-        <i  class="ti ti-brain" style="color:#5bc4a0;font-size:22px ;"></i> 
-        <span class="topbar-logo">
-            Grupo M
-            <span>RRHH System IA</span>
-
-         </span>
-         <div class="topbar-right">
-            <i class="ti ti-bell notif"></i>
-            <div class="avatar">JA</div>
-         </div>
-    </header>
-
+  <header class="topbar">
+    <i class="ti ti-brain" style="color:#5bc4a0;font-size:22px;"></i>
+    <span class="topbar-logo">
+      Grupo M
+      <span>RRHH System IA</span>
+    </span>
+    <div class="topbar-right">
+      <i class="ti ti-bell notif"></i>
+      <div class="avatar" :title="usuario?.nombre">{{ iniciales }}</div>
+    </div>
+  </header>
 </template>
-
 <style>
 
 .topbar {
@@ -72,6 +87,7 @@ header {
 .topbar-logo span {
     color: #5bc4a0;
     font-weight: 400;
+    font-family: 'IM Fell English', 'Times New Roman', Georgia, serif;
 }
 * {
     box-sizing: border-box;

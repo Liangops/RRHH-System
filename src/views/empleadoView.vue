@@ -154,13 +154,10 @@ async function guardarEmpleado() {
                             </span>
                         </td>
                         <td class="td-actions">
-                            <button class="btn-icon" @click="editarEmpleado(empleado)" title="Editar">
+                            <button class="btn-actions" @click="editarEmpleado(empleado)" title="Editar">
                                 <i class="ti ti-edit"></i>
                             </button>
-                            <button class="btn-icon" @click="verEmpleado(empleado)" title="Ver detalle">
-                                <i class="ti ti-eye"></i>
-                            </button>
-                            <button class="btn-icon" @click="eliminarEmpleado(empleado._id)" title="Eliminar">
+                            <button class="btn-actions" @click="eliminarEmpleado(empleado._id)" title="Eliminar">
                                 <i class="ti ti-trash"></i>
                             </button>
                         </td>
@@ -335,18 +332,24 @@ body {
     color: #374151;
 }
 
-.stats {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
-    margin-bottom: 22px;
-}
+
 
 .stats-card {
-    background: #fff;
-    border-radius: 10px;
-    padding: 16px 18px;
-    border: 1px solid #e5e7eb;
+    
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.stats-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: #475569;
 }
 
 .stat-label {
@@ -356,9 +359,12 @@ body {
 }
 
 .stat-value {
-    font-size: 24px;
-    font-weight: 600;
-    color: #1a1a2e;
+  display: block;
+  font-family: 'IM Fell English', 'Times New Roman', Georgia, serif;
+  font-size: 2.2rem;
+  color: #0f172a;
+  line-height: 1;
+  margin-bottom: 0.25rem;
 }
 
 .stat-sub {

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 
 const modalAbierto = ref(false)
 const modalVerAbierto = ref(false)
@@ -8,6 +8,8 @@ const empleados = ref([])
 const expedientes = ref([])
 const expedienteSeleccionado = ref(null)
 const expedienteViendo = ref(null)
+let intervalo = null
+
 
 onMounted(async () => {
   try {
@@ -22,11 +24,29 @@ onMounted(async () => {
   }
 })
 
-// Obtener cantidad de documentos de un empleado
+
+
 function cantidadDocumentos(empleadoId) {
   const exp = expedientes.value.find(e => e.empleadoId === empleadoId || e.empleadoId?._id === empleadoId)
   return exp?.documentos?.length ?? 0
 }
+
+const observacionesPorEmpleado = ref({})
+
+onMounted(async () => {
+  try {
+    const [resEmp, resExp, resObs] = await Promise.all([
+      fetch('/api/empleados'),
+      fetch('/api/expedientes'),
+      fetch('/api/expedientes/con-observaciones') // 👈 nuevo
+    ])
+    empleados.value = await resEmp.json()
+    expedientes.value = await resExp.json()
+    observacionesPorEmpleado.value = await resObs.json()
+  } catch (err) {
+    console.error('Error cargando datos:', err)
+  }
+})
 
 function closeModal() {
   modalAbierto.value = false
@@ -83,6 +103,7 @@ async function guardarExpediente() {
   const data = new FormData()
   data.append('nombre', form.nombre)
   data.append('categoria', form.categoria)
+  data.append('observaciones', form.observaciones ?? '')
   form.archivos.forEach(file => data.append('documentos', file))
 
   const res = await fetch(`/api/expedientes/${expedienteSeleccionado.value._id}/documentos`, {
@@ -91,11 +112,14 @@ async function guardarExpediente() {
   })
 
   if (res.ok) {
-    // Recargar expedientes para actualizar el contador
-    const resExp = await fetch('/api/expedientes')
-    expedientes.value = await resExp.json()
-    closeModal()
-  }
+  const [resExp, resObs] = await Promise.all([
+    fetch('/api/expedientes'),
+    fetch('/api/expedientes/con-observaciones')
+  ])
+  expedientes.value = await resExp.json()
+  observacionesPorEmpleado.value = await resObs.json()
+  closeModal()
+}
 }
 </script>
 
@@ -136,17 +160,17 @@ async function guardarExpediente() {
                         <td>{{ emp.nombre }} {{ emp.apellido }}</td>
                         <td>{{ emp.ingreso }}</td>
                         <td>{{ cantidadDocumentos(emp._id) }}</td>
-                        <td>{{ emp.observaciones ?? 'Sin observaciones' }}</td>
+                        <td>{{ observacionesPorEmpleado[emp._id] ?? 'Sin observaciones' }}</td>
                         <td>
                             <span class="badge" :class="emp.estado === 'Activo' ? 'badge-success' : 'badge-warning'">
                                 {{ emp.estado }}
                             </span>
                         </td>
                         <td class="td-actions">
-                            <button class="btn-icon" @click="agregarDocumento(emp)" title="Agregar documento">
+                            <button class="btn-actions" @click="agregarDocumento(emp)" title="Agregar documento">
                                 <i class="ti ti-upload"></i>
                             </button>
-                            <button class="btn-icon" @click="verExpediente(emp)" title="Ver expediente">
+                            <button class="btn-actions" @click="verExpediente(emp)" title="Ver expediente">
                                 <i class="ti ti-eye"></i>
                             </button>
                         </td>
@@ -185,6 +209,7 @@ async function guardarExpediente() {
                         <option value="Procedimiento">Procedimiento</option>
                         <option value="FAQ">FAQ</option>
                         <option value="Contrato">Contrato</option>
+                        <option value="Otros">Otros</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -199,13 +224,20 @@ async function guardarExpediente() {
                             :key="f.name"
                             style="display:flex; align-items:center; justify-content:space-between; font-size:12px; color:#6b7280; background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px; padding:5px 10px"
                         >
-                            <span>📄 {{ f.name }}</span>
+                            <span>
+                                <i class="ti ti-file-description" style="font-size:15px"></i>
+                                {{ f.name }}</span>
                             <button @click="eliminarArchivo(i)" style="background:none; border:none; cursor:pointer; color:#9ca3af">
                                 <i class="ti ti-trash"></i>
                             </button>
                         </div>
                     </div>
+                    
                 </div>
+                <div class="form-group">
+                        <label class="form-label" >Descripción *</label>
+                        <textarea  class="form-control" v-model="form.observaciones" rows="4" cols="50" placeholder="Ej: Motivo o notas adicionales."></textarea>
+                    </div>
             </div>
             <div class="modal-footer">
                 <button class="btn" @click="closeModal">Cancelar</button>
@@ -334,7 +366,7 @@ body {
 }
 
 .btn-icon:hover {
-    background: #f3f4f6;
+    background:  rgba(128, 128, 128, 0.10);
     color: #374151;
 }
 

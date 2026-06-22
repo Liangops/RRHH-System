@@ -23,6 +23,5 @@ router.delete('/:id',   async (req, res) => {
   res.json({ ok: true })
 })
 
-console.log("KLK")
 
 export default router

@@ -110,7 +110,7 @@ async function guardarDepartamento() {
                         <td>{{ dept.descripcion }}</td>
                         <td>{{ dept.empleados }}</td>
                         <td class="td-actions">
-                            <button class="btn-icon" @click="editarDepartamento(dept)" title="Editar">
+                            <button class="btn-actions" @click="editarDepartamento(dept)" title="Editar">
                                 <i class="ti ti-edit"></i>
                             </button>
                            

@@ -56,7 +56,7 @@ router.get('/', async (req, res) => {
   }
 })
 
-// ← nueva ruta para descargar
+// Ruta para descargar
 router.get('/download', async (req, res) => {
   try {
     const { url, nombre } = req.query
@@ -70,6 +70,27 @@ router.get('/download', async (req, res) => {
   }
 })
 
+ // Nuevo endpoint — debe ir antes de /:empleadoId/documentos
+router.get('/con-observaciones', async (req, res) => {
+  try {
+    const expedientes = await Expediente.find()
+
+    const observaciones = {}
+    expedientes.forEach(exp => {
+      const docs = exp.documentos
+      if (docs.length > 0) {
+        const ultimo = docs[docs.length - 1]
+        observaciones[exp.empleadoId.toString()] = ultimo.observaciones ?? 'Sin observaciones'
+      }
+    })
+
+    res.json(observaciones)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Rutas con parámetros dinámicos siempre de último
 router.post('/:empleadoId/documentos', (req, res, next) => {
   upload.array('documentos', 10)(req, res, (err) => {
     if (err) {
@@ -88,13 +109,14 @@ router.post('/:empleadoId/documentos', (req, res, next) => {
     }
 
     const nuevosDocumentos = req.files.map(file => {
-  return {
-    nombre: req.body.nombre || file.originalname,
-    categoria: req.body.categoria,
-    ruta: file.path,   // ← de vuelta a file.path, que sí tiene la URL
-    fechaSubida: new Date()
-  }
-})
+      return {
+        nombre: req.body.nombre || file.originalname,
+        categoria: req.body.categoria,
+        observaciones: req.body.observaciones,
+        ruta: file.path,
+        fechaSubida: new Date()
+      }
+    })
 
     expediente.documentos.push(...nuevosDocumentos)
     await expediente.save()

@@ -4,6 +4,7 @@ const documentoSchema = new mongoose.Schema({
   nombre: String,
   categoria: String,
   cantidad: String,
+  observaciones: String,
   ruta: String,
   fechaSubida: { type: Date, default: Date.now }
 })
