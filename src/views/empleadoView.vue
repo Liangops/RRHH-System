@@ -2,6 +2,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 
 const API = '/api/empleados'
+const apiDepartamento = '/api/departamentos'
 
 const modalAbierto = ref(false)
 const modalTipo = ref('')
@@ -9,12 +10,15 @@ const form = reactive({})
 const cargando = ref(false)
 
 const empleados = ref([])  // ← Ya no hardcodeado
+const areasorganizacionales  = ref([]) 
 
 // ─── Cargar empleados al montar ───────────────────────────
 onMounted(async () => {
   cargando.value = true
   const res = await fetch(API)
+  const resDep = await fetch(apiDepartamento)
   empleados.value = await res.json()
+  areasorganizacionales.value = await resDep.json()
   cargando.value = false
 })
 
@@ -214,18 +218,15 @@ async function guardarEmpleado() {
                     <div class="form-group">
                         <label class="form-label">Departamento *</label>
                         <select class="form-control" v-model="form.departamento">
-                            <option value="">Seleccionar…</option>
-                            <option>Recursos Humanos</option>
-                            <option>Tecnología</option>
-                            <option>Suministros</option>
-                            <option>Legal</option>
-                            <option>Finanzas</option>
-                            <option>Administración Corporativa</option>
-                            <option>Dirección Corporativa</option>
-                            <option>Ingeniería Corporativa</option>
-                            <option>Auditoría Interna</option>
-                            <option>Compliance</option>
-                        </select>
+                    <option value="" disabled>Seleccione un empleado</option>
+                    <option 
+                    v-for="departament in areasorganizacionales" 
+                    :key="departament._id" 
+                    :value="departament.nombre"
+                    >
+                    {{ departament.codigo }} - {{ departament.nombre }}
+                   </option>
+                   </select>
                     </div>
                 </div>
                 <div class="form-row">
@@ -518,7 +519,7 @@ tr:hover td {
 
 .modal-body {
     padding: 22px;
-    max-height: 70vh;
+    max-height: 75vh;
     overflow-y: auto;
 }
 

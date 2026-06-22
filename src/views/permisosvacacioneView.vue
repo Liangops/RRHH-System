@@ -203,15 +203,15 @@ function closeModal() {
                     <div class="form-group">
                         <label class="form-label">Empleado *</label>
                        <select class="form-control" v-model="form.empleado">
-    <option value="" disabled>Seleccione un empleado</option>
-    <option 
-        v-for="empleado in empleados" 
-        :key="empleado._id" 
-        :value="empleado._id"
-    >
-        {{ empleado.nombre }}
-    </option>
-</select>
+                    <option value="" disabled>Seleccione un empleado</option>
+                    <option 
+                    v-for="empleado in empleados" 
+                    :key="empleado._id" 
+                    :value="empleado._id"
+                    >
+                    {{ empleado.nombre }}
+                   </option>
+                   </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Tipo de permiso *</label>

@@ -19,32 +19,26 @@ const form = reactive({
   nombre: '', apellido: '', correo: '', password: ''
 })
 
+// Se eliminó el plan 'free'. Solo quedan planes premium.
 const planes = [
-  {
-    id: 'free', nombre: 'Free', precio: 0,
-    icon: 'ti-sparkles', color: '#6b7280',
-    desc: 'Para explorar sin compromiso',
-    features: ['5 empleados', 'Expedientes básicos', 'Soporte 24/7', 'Reportes'],
-    featureOk: [true, true, true, false]
-  },
   {
     id: 'pro', nombre: 'Pro', precio: 29,
     icon: 'ti-rocket', color: '#1a3c5e',
     popular: true,
     desc: 'Para empresas en crecimiento',
-    features: ['50 empleados', 'Expedientes completos', 'Reportes avanzados', 'Soporte 24/7'],
-    featureOk: [true, true, true, true]
+    features: ['50 empleados', 'Modulos básicos', 'Soporte 24/7',''],
+    featureOk: [true, true, true]
   },
   {
     id: 'enterprise', nombre: 'Enterprise', precio: 99,
     icon: 'ti-crown', color: '#92400e',
     desc: 'Sin límites, con soporte 24/7',
-    features: ['Empleados ilimitados', 'Todo incluido', 'Soporte 24/7'],
-    featureOk: [true, true, true]
+    features: ['Empleados ilimitados', 'Todo incluido', 'Soporte 24/7', 'Asistencia personal'],
+    featureOk: [true, true, true, true]
   }
 ]
 
-const planSeleccionado = ref(planes[1])
+const planSeleccionado = ref(planes[0]) // Apuesta por defecto al plan Pro
 
 /* ── Canvas particles ── */
 let animId = null
@@ -114,7 +108,7 @@ onUnmounted(() => { if (animId) cancelAnimationFrame(animId) })
 async function irA(p) {
   pantalla.value = p
   loginError.value = ''
-  if (p === 'pago' && planSeleccionado.value.precio > 0) {
+  if (p === 'pago') {
     setTimeout(cargarPayPal, 400)
   }
 }
@@ -141,11 +135,9 @@ async function login() {
     localStorage.setItem('token', data.token)
     localStorage.setItem('usuario', JSON.stringify(data.usuario))
 
-    // Redirigir según rol
     if (data.usuario.rol === 'superadmin') {
       router.push('/superadmin')
-    } else if (data.usuario.rol === 'admin') {
-      router.push('/dashboard')    } else {
+    } else {
       router.push('/dashboard')
     }
   } catch (err) {
@@ -161,8 +153,6 @@ async function registro() {
     loginError.value = 'Completa todos los campos requeridos.'
     return
   }
-  // El registro completo se hace luego del pago en /api/verificar-pago
-  // Aquí solo avanzamos a la pantalla de planes
   irA('planes')
 }
 
@@ -192,9 +182,8 @@ function renderPayPal() {
     async onApprove(data, actions) {
       cargando.value = true
       await actions.order.capture()
-       console.log('FORM AL PAGAR:', form.correo, form.password)
+      console.log('FORM AL PAGAR:', form.correo, form.password)
       try {
-        // 1. Verificar pago + generar factura + eNCF
         const res = await fetch(`${API}/api/verificar-pago`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -207,7 +196,6 @@ function renderPayPal() {
         const result = await res.json()
         eNCF.value = result.eNCF || ''
 
-        // 2. Crear usuario en la base de datos
         const regRes = await fetch(`${API}/api/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -247,7 +235,6 @@ function renderPayPal() {
     <div class="stage" :class="{ 'stage--wide': pantalla === 'planes' }">
       <Transition name="slide" mode="out-in">
 
-        <!-- LOGIN -->
         <div v-if="pantalla === 'login'" key="login" class="glass-card">
           <div class="brand">
             <div class="brand-icon">
@@ -288,10 +275,9 @@ function renderPayPal() {
             <div v-else class="spinner-sm"></div>
           </button>
           <div class="divider-line" style="margin-top: 30px;"></div>
-          <p class="register-prompt">¿No tienes cuenta? <span class="link-accent" @click="irA('registro')">Regístrate gratis</span></p>
+          <p class="register-prompt">¿No tienes cuenta? <span class="link-accent" @click="irA('registro')">Regístrate</span></p>
         </div>
 
-        <!-- REGISTRO -->
         <div v-else-if="pantalla === 'registro'" key="registro" class="glass-card">
           <button class="back-btn" @click="irA('login')"><i class="ti ti-arrow-left"></i> Volver</button>
           <div class="progress-bar">
@@ -344,7 +330,6 @@ function renderPayPal() {
           <p class="register-prompt" style="margin-top:16px">¿Ya tienes cuenta? <span class="link-accent" @click="irA('login')">Inicia sesión</span></p>
         </div>
 
-        <!-- PLANES -->
         <div v-else-if="pantalla === 'planes'" key="planes" class="planes-wrap">
           <button class="back-btn back-btn--ghost" @click="irA('registro')"><i class="ti ti-arrow-left"></i> Volver</button>
           <div class="planes-head">
@@ -366,12 +351,9 @@ function renderPayPal() {
               <p class="tile-name">{{ plan.nombre }}</p>
               <p class="tile-desc">{{ plan.desc }}</p>
               <div class="tile-price">
-                <span v-if="plan.precio === 0" class="tile-price-free">Gratis</span>
-                <template v-else>
-                  <span class="tile-currency">$</span>
-                  <span class="tile-amount">{{ plan.precio }}</span>
-                  <span class="tile-period">/mes</span>
-                </template>
+                <span class="tile-currency">$</span>
+                <span class="tile-amount">{{ plan.precio }}</span>
+                <span class="tile-period">/mes</span>
               </div>
               <ul class="tile-features">
                 <li v-for="(f, i) in plan.features" :key="i" :class="plan.featureOk[i] ? 'feat--ok' : 'feat--no'">
@@ -387,16 +369,15 @@ function renderPayPal() {
             <div class="planes-footer-info">
               <span class="footer-plan-label">Seleccionado:</span>
               <strong class="footer-plan-name">{{ planSeleccionado.nombre }}</strong>
-              <span class="footer-plan-price">{{ planSeleccionado.precio === 0 ? '· Gratis' : `· $${planSeleccionado.precio}/mes` }}</span>
+              <span class="footer-plan-price">· ${{ planSeleccionado.precio }}/mes</span>
             </div>
-            <button class="btn-main btn-main--compact" @click="planSeleccionado.precio === 0 ? irA('exito') : irA('pago')">
-              <span>{{ planSeleccionado.precio === 0 ? 'Comenzar gratis' : `Pagar $${planSeleccionado.precio}` }}</span>
+            <button class="btn-main btn-main--compact" @click="irA('pago')">
+              <span>Pagar ${{ planSeleccionado.precio }}</span>
               <i class="ti ti-arrow-right"></i>
             </button>
           </div>
         </div>
 
-        <!-- PAGO -->
         <div v-else-if="pantalla === 'pago'" key="pago" class="glass-card">
           <button class="back-btn" @click="irA('planes')"><i class="ti ti-arrow-left"></i> Volver</button>
           <div class="pago-hero">
@@ -419,7 +400,6 @@ function renderPayPal() {
           <div v-if="loginError" class="error-msg" style="margin-top:12px"><i class="ti ti-alert-circle"></i> {{ loginError }}</div>
         </div>
 
-        <!-- ÉXITO -->
         <div v-else-if="pantalla === 'exito'" key="exito" class="glass-card exito-card">
           <div class="exito-animation">
             <div class="exito-ring exito-ring-3"></div>
@@ -453,6 +433,8 @@ function renderPayPal() {
 </template>
 
 <style scoped>
+/* Los estilos se mantienen intactos, eliminando únicamente las propiedades específicas 
+   de .tile-price-free que ya no tienen uso en la interfaz. */
 .root {
   position: relative;
   min-height: 100vh;
@@ -552,7 +534,7 @@ function renderPayPal() {
 .planes-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.35); display: block; margin-bottom: 10px; }
 .planes-title { font-size: 36px; font-weight: 800; color: #fff; margin: 0 0 8px; letter-spacing: -1px; }
 .planes-desc { font-size: 14px; color: rgba(255,255,255,.35); margin: 0; }
-.planes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; width: 100%; margin-bottom: 24px; }
+.planes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; width: 100%; margin-bottom: 24px; }
 .plan-tile { background: rgba(255,255,255,.05); border: 1.5px solid rgba(255,255,255,.09); border-radius: 20px; padding: 24px 20px; cursor: pointer; position: relative; transition: border-color .2s, background .2s, transform .2s, box-shadow .2s; overflow: visible; }
 .plan-tile:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.2); transform: translateY(-4px); }
 .plan-tile--popular { background: rgba(255,255,255,.95); border-color: #fff; box-shadow: 0 20px 60px rgba(0,0,0,.4); }
@@ -565,7 +547,6 @@ function renderPayPal() {
 .tile-desc { font-size: 12px; color: rgba(255,255,255,.4); margin: 0 0 18px; line-height: 1.5; }
 .plan-tile--popular .tile-desc { color: #64748b; }
 .tile-price { display: flex; align-items: baseline; gap: 2px; margin-bottom: 20px; }
-.tile-price-free { font-size: 28px; font-weight: 700; color: rgba(255,255,255,.75); }
 .tile-currency { font-size: 16px; font-weight: 600; color: rgba(255,255,255,.5); }
 .plan-tile--popular .tile-currency { color: #94a3b8; }
 .tile-amount { font-size: 40px; font-weight: 800; color: #fff; line-height: 1; letter-spacing: -1.5px; }
