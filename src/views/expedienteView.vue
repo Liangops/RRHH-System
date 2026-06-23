@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 
 const modalAbierto = ref(false)
 const modalVerAbierto = ref(false)
@@ -94,6 +94,18 @@ function onFileChange(e) {
   form.archivos = seleccionados
 }
 
+
+const busqueda = ref('')
+const empleadosFiltrados = computed(() => {
+  const q = busqueda.value.toLowerCase()
+  if (!q) return empleados.value
+  return empleados.value.filter(e =>
+    e.nombre?.toLowerCase().includes(q) ||
+    e.cedula?.toLowerCase().includes(q) ||
+    e.cargo?.toLowerCase().includes(q)
+  )
+})
+
 async function guardarExpediente() {
   if (!form.archivos?.length) {
     alert('Debes seleccionar al menos un PDF')
@@ -142,7 +154,7 @@ async function guardarExpediente() {
             </div>
             <div class="search-bar">
                 <i class="ti ti-search"></i>
-                <input type="text" placeholder="Buscar por nombre o cédula" />
+                <input v-model="busqueda" type="text" placeholder="Buscar por nombre o cédula" />
             </div>
             <table>
                 <thead>
@@ -156,7 +168,7 @@ async function guardarExpediente() {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="emp in empleados" :key="emp._id">
+                    <tr v-for="emp in empleadosFiltrados" :key="emp._id">
                         <td>{{ emp.nombre }} {{ emp.apellido }}</td>
                         <td>{{ emp.ingreso }}</td>
                         <td>{{ cantidadDocumentos(emp._id) }}</td>
@@ -175,7 +187,7 @@ async function guardarExpediente() {
                             </button>
                         </td>
                     </tr>
-                    <tr v-if="empleados.length === 0">
+                    <tr v-if="empleadosFiltrados.length === 0">
                         <td colspan="6" style="text-align:center; color:#9ca3af; padding:24px">
                             No hay empleados registrados.
                         </td>

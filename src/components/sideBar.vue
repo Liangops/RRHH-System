@@ -1,90 +1,84 @@
 <script setup>
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+function cerrarSesion() {
+    localStorage.removeItem('token')
+    router.push('/login')
+
+}
+const usuario = JSON.parse(localStorage.getItem('usuario') || 'null')
+const rol = usuario?.rol ?? 'empleado'
+const esAdmin = ['admin', 'superadmin'].includes(rol)
 </script>
 
 <template>
 
     <nav class="sidebar" id="sidebar">
 
-        <router-link to="/empleado" class="nav-item" active-class="nav-item-active">
-            <i class="ti ti-users"></i>
-            Empleados
-        </router-link>
+    <!-- Solo admin -->
+    <router-link v-if="esAdmin" to="/empleado" class="nav-item" active-class="nav-item-active">
+        <i class="ti ti-users"></i> Empleados
+    </router-link>
 
-        <router-link to="/departamento" class="nav-item" active-class="nav-item-active">
-            <i class="ti ti-building"></i>
-            Departamentos
-        </router-link>
+    <router-link v-if="esAdmin" to="/departamento" class="nav-item" active-class="nav-item-active">
+        <i class="ti ti-building"></i> Departamentos
+    </router-link>
 
-        <router-link to="/expedientes" class="nav-item" active-class="nav-item-active">
-            <i class="ti ti-folder"></i>
-            Expedientes
-        </router-link>
+    <router-link v-if="esAdmin" to="/expedientes" class="nav-item" active-class="nav-item-active">
+        <i class="ti ti-folder"></i> Expedientes
+    </router-link>
 
-        <router-link to="/permisos-vacaciones" class="nav-item" active-class="nav-item-active">
-            <i class="ti ti-calendar-off"></i>
-            Permisos y Vacaciones
-        </router-link>
+    <router-link v-if="esAdmin" to="/asistencia" class="nav-item" active-class="nav-item-active">
+        <i class="ti ti-clock"></i> Asistencia
+    </router-link>
 
-        <router-link to="/asistencia" class="nav-item" active-class="nav-item-active">
-            <i class="ti ti-clock"></i>
-            Asistencia
-        </router-link>
+    <router-link v-if="esAdmin" to="/nomina" class="nav-item" active-class="nav-item-active">
+        <i class="ti ti-cash"></i> Nomina
+    </router-link>
 
-        <router-link to="/nomina" class="nav-item" active-class="nav-item-active">
-            <i class="ti ti-cash"></i>
-            Nomina
-        </router-link>
+    <!-- Todos los roles -->
+    <router-link to="/permisos-vacaciones" class="nav-item" active-class="nav-item-active">
+        <i class="ti ti-calendar-off"></i> Permisos y Vacaciones
+    </router-link>
 
-        <router-link to="/capacitaciones" class="nav-item" active-class="nav-item-active">
-            <i class="ti ti-school"></i>
-            Capacitaciones
-        </router-link>
+    <router-link to="/capacitaciones" class="nav-item" active-class="nav-item-active">
+        <i class="ti ti-school"></i> Capacitaciones
+    </router-link>
 
-        <div class="sidebar-section"> Conocimiento </div>
-        <router-link to="/basedeconocimiento" class="nav-item" active-class="nav-item-active">
-            <i class="ti ti-books"></i>
-            Base de conocimiento
-        </router-link>
+    <!-- Conocimiento -->
+    <div class="sidebar-section">Conocimiento</div>
 
-        <router-link to="/chatia" class="nav-item" active-class="nav-item-active">
-            <i class="ti ti-sparkles"></i>
-            Asistente IA
-        </router-link>
+    <router-link to="/basedeconocimiento" class="nav-item" active-class="nav-item-active">
+        <i class="ti ti-books"></i> Base de conocimiento
+    </router-link>
 
-        <div class="sidebar-section"> Sistema </div>
-        <router-link to="/reportes" class="nav-item" active-class="nav-item-active">
-            <i class="ti ti-chart-bar"></i>
-            Reportes
-        </router-link>
+    <router-link to="/chatia" class="nav-item" active-class="nav-item-active">
+        <i class="ti ti-sparkles"></i> Asistente IA
+    </router-link>
 
-        <router-link to="/auditoria" class="nav-item" active-class="nav-item-active">
-            <i class="ti ti-shield-check"></i>
-            Auditoria
-        </router-link>
+    <!-- Sistema — solo admin -->
+    <div v-if="esAdmin" class="sidebar-section">Sistema</div>
 
-        <router-link to="/facturacionelectronica" class="nav-item" active-class="nav-item-active">
-            <i class="ti ti-receipt"></i>
-            Facturación electrónica
-        </router-link>
+    <router-link v-if="esAdmin" to="/reportes" class="nav-item" active-class="nav-item-active">
+        <i class="ti ti-chart-bar"></i> Reportes
+    </router-link>
 
-        <router-link to="/suscripciones" class="nav-item" active-class="nav-item-active">
-            <i class="ti ti-star"></i>
-            Suscripciones
-        </router-link>
+    <router-link v-if="esAdmin" to="/auditoria" class="nav-item" active-class="nav-item-active">
+        <i class="ti ti-shield-check"></i> Auditoria
+    </router-link>
 
-        <router-link to="/configuracion" class="nav-item" active-class="nav-item-active">
-            <i class="ti ti-settings"></i>
-            Configuración
-        </router-link>
- 
-        <div class="nav-item" style="margin-top: 20px;color:rgba(255, 100, 100, .7)">
-            <i class="ti ti-logout">
-               
-            </i>
-            Cerra sesión
-        </div>
+    <router-link v-if="esAdmin" to="/configuracion" class="nav-item" active-class="nav-item-active">
+        <i class="ti ti-settings"></i> Configuración
+    </router-link>
 
-    </nav>
+    <div class="nav-item" @click="cerrarSesion" style="margin-top: 20px; color: rgba(255, 100, 100, .7)">
+        <i class="ti ti-logout"></i>
+        Cerrar sesión
+    </div>
+
+</nav>
 
 </template>
 
@@ -96,6 +90,8 @@
     background: rgba(91, 196, 160, .13);
     color: #5bc4a0;
     border-left: 30px solid #5bc4a0;
+    border-radius: 5px;
+    margin: 2px 7px 2px 7px;
 }
 
 .nav {

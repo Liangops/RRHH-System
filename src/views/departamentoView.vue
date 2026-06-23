@@ -89,10 +89,6 @@ async function guardarDepartamento() {
                 <span class="card-title">Listado de departamentos</span>
                 
             </div>
-            <div class="search-bar">
-                <i class="ti ti-search"></i>
-                <input type="text" placeholder="Buscar por codigo o nombre" />
-            </div>
             <table>
                 <thead>
                     <tr>

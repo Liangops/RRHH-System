@@ -53,6 +53,18 @@ async function eliminarEmpleado(id) {
   empleados.value = empleados.value.filter(e => e._id !== id)
 }
 
+const busqueda = ref('')
+
+const empleadosFiltrados = computed(() => {
+  const q = busqueda.value.toLowerCase()
+  if (!q) return empleados.value
+  return empleados.value.filter(e =>
+    e.nombre?.toLowerCase().includes(q) ||
+    e.cedula?.toLowerCase().includes(q) ||
+    e.cargo?.toLowerCase().includes(q)
+  )
+})
+
 // ─── Guardar (crear o editar) ─────────────────────────────
 async function guardarEmpleado() {
   const esEdicion = !!form._id  // MongoDB usa _id
@@ -75,6 +87,8 @@ async function guardarEmpleado() {
   }
 
   closeModal()
+
+  
 }
 </script>
 
@@ -131,7 +145,7 @@ async function guardarEmpleado() {
             </div>
             <div class="search-bar">
                 <i class="ti ti-search"></i>
-                <input type="text" placeholder="Buscar por nombre, cédula o cargo" />
+                <input v-model="busqueda" type="text" placeholder="Buscar por nombre, cédula o cargo" />
             </div>
             <table>
                 <thead>
@@ -146,7 +160,7 @@ async function guardarEmpleado() {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="empleado in empleados" :key="empleado._id">
+                    <tr v-for="empleado in empleadosFiltrados" :key="empleado._id">
                         <td>{{ empleado.nombre }}</td>
                         <td>{{ empleado.cedula }}</td>
                         <td>{{ empleado.cargo }}</td>
@@ -166,7 +180,7 @@ async function guardarEmpleado() {
                             </button>
                         </td>
                     </tr>
-                    <tr v-if="empleados.length === 0">
+                    <tr v-if="empleadosFiltrados.length === 0">
                         <td colspan="7" style="text-align:center; color:#9ca3af; padding: 24px;">
                             No hay empleados registrados.
                         </td>
@@ -189,35 +203,35 @@ async function guardarEmpleado() {
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Nombre *</label>
-                        <input class="form-control" v-model="form.nombre" placeholder="Ej: José" />
+                        <input class="form-control" v-model="form.nombre" placeholder="Ej: José" required/>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Apellido *</label>
-                        <input class="form-control" v-model="form.apellido" placeholder="Ej: Fermín" />
+                        <input class="form-control" v-model="form.apellido" placeholder="Ej: Fermín" required/>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Cédula *</label>
-                        <input class="form-control" v-model="form.cedula" placeholder="001-0000000-0" />
+                        <input type="number" class="form-control" v-model="form.cedula" :max="11" :min="1" placeholder="001-0000000-0" required/>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Teléfono</label>
-                        <input class="form-control" v-model="form.telefono" placeholder="809-000-0000" />
+                        <input class="form-control" v-model="form.telefono" max="11" min="11" placeholder="809-000-0000" />
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Correo electrónico *</label>
-                    <input class="form-control" v-model="form.correo" placeholder="correo@grupom.com.do" />
+                    <input class="form-control" v-model="form.correo" placeholder="correo@grupom.com.do" required />
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Cargo *</label>
-                        <input class="form-control" v-model="form.cargo" placeholder="Ej: CEO" />
+                        <input class="form-control" v-model="form.cargo" placeholder="Ej: CEO" required/>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Departamento *</label>
-                        <select class="form-control" v-model="form.departamento">
+                        <select class="form-control" v-model="form.departamento" required>
                     <option value="" disabled>Seleccione un empleado</option>
                     <option 
                     v-for="departament in areasorganizacionales" 
@@ -232,11 +246,11 @@ async function guardarEmpleado() {
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Fecha de ingreso</label>
-                        <input type="date" class="form-control" v-model="form.ingreso" />
+                        <input type="date" class="form-control" v-model="form.ingreso" required />
                     </div>
                     <div class="form-group">
                         <label class="form-label">Estado</label>
-                        <select class="form-control" v-model="form.estado">
+                        <select class="form-control" v-model="form.estado" required>
                             <option>Activo</option>
                             <option>Inactivo</option>
                             <option>En permiso</option>
@@ -280,6 +294,7 @@ body {
     font-size: 18px;
     font-weight: 600;
     color: #1a1a2e;
+    font-family: 'IM Fell English', 'Times New Roman', Georgia, serif;
 }
 
 .page-subtitle {
@@ -393,6 +408,7 @@ body {
     font-size: 14px;
     font-weight: 600;
     color: #1a1a2e;
+    font-family: 'IM Fell English', 'Times New Roman', Georgia, serif;
 }
 
 .search-bar {

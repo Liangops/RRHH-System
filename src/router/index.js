@@ -11,6 +11,8 @@ import capacitacionesView from "../views/capacitacionesView.vue";
 import reportesView from "../views/reportesView.vue";
 import dashboardView from "../views/dashboardView.vue";
 import superadminView from "../views/superadminView.vue";
+import configuracionView from "../views/confiView.vue";
+
 
 const routes = [
   {
@@ -59,6 +61,7 @@ const routes = [
     component: permisosvacacioneView,
     meta: { requiereAuth: true },
   },
+  /*
   {
     path: "/asistencia",
     name: "asistencia",
@@ -71,6 +74,7 @@ const routes = [
     component: nominaView,
     meta: { requiereAuth: true },
   },
+  */
   {
     path: "/capacitaciones",
     name: "capacitaciones",
@@ -81,6 +85,12 @@ const routes = [
     path: "/reportes",
     name: "reportes",
     component: reportesView,
+    meta: { requiereAuth: true },
+  },
+  {
+    path: "/configuracion",
+    name: "configuracion",
+    component: configuracionView,
     meta: { requiereAuth: true },
   },
 ];
