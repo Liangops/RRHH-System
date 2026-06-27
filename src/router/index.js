@@ -12,13 +12,11 @@ import reportesView from "../views/reportesView.vue";
 import dashboardView from "../views/dashboardView.vue";
 import superadminView from "../views/superadminView.vue";
 import configuracionView from "../views/confiView.vue";
-
+import basedeconocimientoView from "../views/basedeconocimientoView.vue";
+import chatiaView from "../views/chatiaView.vue";
 
 const routes = [
-  {
-    path: "/",
-    redirect: "/login",
-  },
+  { path: "/", redirect: "/login" },
   {
     path: "/login",
     name: "login",
@@ -62,18 +60,8 @@ const routes = [
     meta: { requiereAuth: true },
   },
   /*
-  {
-    path: "/asistencia",
-    name: "asistencia",
-    component: asistenciaView,
-    meta: { requiereAuth: true },
-  },
-  {
-    path: "/nomina",
-    name: "nomina",
-    component: nominaView,
-    meta: { requiereAuth: true },
-  },
+  { path: "/asistencia", name: "asistencia", component: asistenciaView, meta: { requiereAuth: true } },
+  { path: "/nomina", name: "nomina", component: nominaView, meta: { requiereAuth: true } },
   */
   {
     path: "/capacitaciones",
@@ -93,6 +81,20 @@ const routes = [
     component: configuracionView,
     meta: { requiereAuth: true },
   },
+  {
+    // ← Solo admin y superadmin pueden entrar aquí
+    path: "/basedeconocimiento",
+    name: "basedeconocimiento",
+    component: basedeconocimientoView,
+    meta: { requiereAuth: true, roles: ["admin", "superadmin"] },
+  },
+  {
+    // ← Todos los roles autenticados pueden usar el chat
+    path: "/chatia",
+    name: "chatia",
+    component: chatiaView,
+    meta: { requiereAuth: true },
+  },
 ];
 
 const router = createRouter({
@@ -100,20 +102,21 @@ const router = createRouter({
   routes,
 });
 
-
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem("token");
   const usuario = JSON.parse(localStorage.getItem("usuario") || "null");
 
-
   if (to.meta.publica) return next();
-
 
   if (to.meta.requiereAuth && !token) return next("/login");
 
-
+  // Rol único (ej: superadmin)
   if (to.meta.rol && usuario?.rol !== to.meta.rol) {
-    
+    return next("/dashboard");
+  }
+
+  // Lista de roles permitidos (ej: admin, superadmin)
+  if (to.meta.roles && !to.meta.roles.includes(usuario?.rol)) {
     return next("/dashboard");
   }
 

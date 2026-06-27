@@ -8,12 +8,13 @@ const usuarios = ref([])
 const empleados = ref([])
 const modalAbierto = ref(false)
 const form = reactive({})
+const erroresForm = reactive({})
 const cargando = ref(false)
 
 onMounted(async () => {
   cargando.value = true
   const [resU, resE] = await Promise.all([
-    fetch('/api/admin/usuarios', { headers: authHeaders() }),  // ← cambia aquí
+    fetch('/api/admin/usuarios', { headers: authHeaders() }),
     fetch('/api/empleados', { headers: authHeaders() })
   ])
   usuarios.value = await resU.json()
@@ -25,21 +26,55 @@ function authHeaders() {
   return { Authorization: `Bearer ${localStorage.getItem('token')}` }
 }
 
+function limpiarErrores() {
+  Object.keys(erroresForm).forEach(k => delete erroresForm[k])
+}
+
+function validarForm() {
+  limpiarErrores()
+
+  if (!form.nombre?.trim())
+    erroresForm.nombre = 'El nombre de usuario es obligatorio.'
+
+  if (!form.correo?.trim())
+    erroresForm.correo = 'El correo electrónico es obligatorio.'
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correo))
+    erroresForm.correo = 'Ingresa un correo válido.'
+
+  if (!form._id && !form.password?.trim())
+    erroresForm.password = 'La contraseña es obligatoria.'
+  else if (!form._id && form.password.length < 8)
+    erroresForm.password = 'Mínimo 8 caracteres.'
+
+  if (!form.rol)
+    erroresForm.rol = 'Selecciona un rol.'
+
+  if (!form.empleadoId)
+    erroresForm.empleadoId = 'Selecciona un empleado.'
+
+  return Object.keys(erroresForm).length === 0
+}
+
 function openModal() {
   Object.keys(form).forEach(k => delete form[k])
+  limpiarErrores()
   modalAbierto.value = true
 }
 
 function closeModal() {
   modalAbierto.value = false
+  limpiarErrores()
 }
 
 function editarUsuario(usuario) {
   Object.assign(form, { ...usuario })
+  limpiarErrores()
   modalAbierto.value = true
 }
 
 async function guardarUsuario() {
+  if (!validarForm()) return
+
   const esEdicion = !!form._id
 
   const body = {
@@ -60,15 +95,13 @@ async function guardarUsuario() {
     }
   )
 
- const data = await res.json()
-if (esEdicion) {
-  const idx = usuarios.value.findIndex(u => u._id === form._id)
-  if (idx !== -1) usuarios.value[idx] = data.empleado ?? data
-} else {
-  // data.empleado es el usuario creado
-  if (data.empleado) usuarios.value.push(data.empleado)
-}
-closeModal()
+  const data = await res.json()
+  if (esEdicion) {
+    const idx = usuarios.value.findIndex(u => u._id === form._id)
+    if (idx !== -1) usuarios.value[idx] = data.empleado ?? data
+  } else {
+    if (data.empleado) usuarios.value.push(data.empleado)
+  }
 
   closeModal()
 }
@@ -108,7 +141,7 @@ const empleadoNombre = (id) => {
         </thead>
         <tbody>
           <tr v-for="u in usuarios" :key="u._id">
-            <td>{{ u.nombre }}</td>
+            <td>{{ u.correo }}</td>
             <td>{{ empleadoNombre(u.empleadoId) }}</td>
             <td>
               <span class="badge badge-rol">{{ u.rol }}</span>
@@ -141,43 +174,77 @@ const empleadoNombre = (id) => {
         <span class="modal-title">{{ form._id ? 'Editar usuario' : 'Nuevo usuario del sistema' }}</span>
         <button class="modal-close" @click="closeModal"><i class="ti ti-x"></i></button>
       </div>
+
       <div class="modal-body">
 
+        <!-- Empleado vinculado -->
         <div class="form-group">
-          <label class="form-label">Empleado vinculado</label>
-          <select class="form-control" v-model="form.empleadoId">
+          <label class="form-label">Empleado vinculado *</label>
+          <select class="form-control" :class="{ 'input-error': erroresForm.empleadoId }" v-model="form.empleadoId">
             <option value="" disabled>Seleccionar...</option>
             <option v-for="e in empleados" :key="e._id" :value="e._id">
               {{ e.nombre }} {{ e.apellido }}
             </option>
           </select>
+          <span v-if="erroresForm.empleadoId" class="error-msg">{{ erroresForm.empleadoId }}</span>
         </div>
 
+        <!-- Nombre -->
         <div class="form-group">
           <label class="form-label">Nombre de usuario *</label>
-          <input class="form-control" v-model="form.nombre" placeholder="Ej: maria.reyes" />
+          <input
+            class="form-control"
+            :class="{ 'input-error': erroresForm.nombre }"
+            v-model="form.nombre"
+            placeholder="Ej: maria.reyes"
+          />
+          <span v-if="erroresForm.nombre" class="error-msg">{{ erroresForm.nombre }}</span>
         </div>
 
+        <!-- Correo -->
         <div class="form-group">
           <label class="form-label">Correo electrónico *</label>
-          <input class="form-control" v-model="form.correo" placeholder="correo@empresa.com" />
+          <input
+            class="form-control"
+            :class="{ 'input-error': erroresForm.correo }"
+            v-model="form.correo"
+            placeholder="correo@empresa.com"
+          />
+          <span v-if="erroresForm.correo" class="error-msg">{{ erroresForm.correo }}</span>
         </div>
 
+        <!-- Contraseña (solo requerida al crear) -->
         <div class="form-group">
-          <label class="form-label">Contraseña *</label>
-          <input class="form-control" type="password" v-model="form.password" placeholder="Mínimo 8 caracteres" />
+          <label class="form-label">
+            Contraseña {{ form._id ? '(dejar vacío para no cambiar)' : '*' }}
+          </label>
+          <input
+            class="form-control"
+            :class="{ 'input-error': erroresForm.password }"
+            type="password"
+            v-model="form.password"
+            placeholder="Mínimo 8 caracteres"
+          />
+          <span v-if="erroresForm.password" class="error-msg">{{ erroresForm.password }}</span>
         </div>
 
+        <!-- Rol -->
         <div class="form-group">
           <label class="form-label">Rol *</label>
-          <select class="form-control" v-model="form.rol">
+          <select
+            class="form-control"
+            :class="{ 'input-error': erroresForm.rol }"
+            v-model="form.rol"
+          >
             <option value="">Seleccionar...</option>
             <option value="admin">Administrador</option>
             <option value="empleado">Empleado</option>
           </select>
+          <span v-if="erroresForm.rol" class="error-msg">{{ erroresForm.rol }}</span>
         </div>
 
       </div>
+
       <div class="modal-footer">
         <button class="btn" @click="closeModal">Cancelar</button>
         <button class="btn btn-primary" @click="guardarUsuario">
@@ -231,4 +298,8 @@ tr:hover td { background: #fafafa; }
 .form-label { font-size: 12px; font-weight: 500; color: #374151; margin-bottom: 5px; display: block; }
 .form-control { width: 100%; padding: 8px 11px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; color: #1a1a2e; font-size: 13px; outline: none; font-family: inherit; transition: border-color .15s; box-sizing: border-box; }
 .form-control:focus { border-color: #1a3c5e; box-shadow: 0 0 0 3px rgba(26,60,94,.08); }
+
+/* Validación */
+.input-error { border-color: #ef4444 !important; box-shadow: 0 0 0 3px rgba(239,68,68,.1); }
+.error-msg { display: block; font-size: 11px; color: #ef4444; margin-top: 4px; }
 </style>

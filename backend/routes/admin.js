@@ -70,10 +70,11 @@ router.get('/usuarios', verificarToken, soloAdmin, async (req, res) => {
     const usuarios = await Usuario.find({ empresaId: req.usuario.id }).select('-password')
     res.json(usuarios)
   } catch (err) {
-    console.error('ERROR /usuarios:', err.message) // ← agrega esto
+    console.error('ERROR /usuarios:', err.message)
     res.status(500).json({ error: err.message })
   }
 })
+
 // Admin — crear usuario con rol específico
 router.post('/usuarios', verificarToken, soloAdmin, async (req, res) => {
   try {
@@ -81,11 +82,11 @@ router.post('/usuarios', verificarToken, soloAdmin, async (req, res) => {
     const existe = await Usuario.findOne({ correo })
     if (existe) return res.status(400).json({ error: 'Correo ya registrado' })
 
-    const hash = await bcrypt.hash(password, 10) // ← hashear
+    const hash = await bcrypt.hash(password, 10)
 
     const usuario = await Usuario.create({
       nombre, correo,
-      password: hash,  // ← usar hash
+      password: hash,
       rol: rol || 'empleado',
       estado: 'activo',
       empresaId: req.usuario.id,
@@ -138,7 +139,7 @@ router.put('/usuarios/:id', verificarToken, soloAdmin, async (req, res) => {
   try {
     const { nombre, correo, password, rol, empleadoId, permisos } = req.body
     const update = { nombre, correo, rol, empleadoId, permisos }
-    
+
     if (password) {
       update.password = await bcrypt.hash(password, 10)
     }
@@ -154,4 +155,20 @@ router.put('/usuarios/:id', verificarToken, soloAdmin, async (req, res) => {
     res.status(500).json({ error: err.message })
   }
 })
+
+// Admin — eliminar usuario
+router.delete('/usuarios/:id', verificarToken, soloAdmin, async (req, res) => {
+  try {
+    const usuario = await Usuario.findOneAndDelete({
+      _id: req.params.id,
+      empresaId: req.usuario.id
+    })
+    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' })
+
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 export default router

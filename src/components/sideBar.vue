@@ -3,167 +3,161 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-function cerrarSesion() {
-    localStorage.removeItem('token')
-    router.push('/login')
-
-}
 const usuario = JSON.parse(localStorage.getItem('usuario') || 'null')
 const rol = usuario?.rol ?? 'empleado'
 const esAdmin = ['admin', 'superadmin'].includes(rol)
+
+async function cerrarSesion() {
+  const token = localStorage.getItem('token')
+  try {
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    })
+  } catch (err) {
+    console.error('Error al registrar logout:', err)
+  } finally {
+    localStorage.removeItem('token')
+    localStorage.removeItem('usuario')
+    router.push('/login')
+  }
+}
 </script>
 
 <template>
-
-    <nav class="sidebar" id="sidebar">
+  <nav class="sidebar" id="sidebar">
 
     <!-- Solo admin -->
     <router-link v-if="esAdmin" to="/empleado" class="nav-item" active-class="nav-item-active">
-        <i class="ti ti-users"></i> Empleados
+      <i class="ti ti-users"></i> Empleados
     </router-link>
 
     <router-link v-if="esAdmin" to="/departamento" class="nav-item" active-class="nav-item-active">
-        <i class="ti ti-building"></i> Departamentos
+      <i class="ti ti-building"></i> Departamentos
     </router-link>
 
     <router-link v-if="esAdmin" to="/expedientes" class="nav-item" active-class="nav-item-active">
-        <i class="ti ti-folder"></i> Expedientes
+      <i class="ti ti-folder"></i> Expedientes
     </router-link>
 
     <router-link v-if="esAdmin" to="/asistencia" class="nav-item" active-class="nav-item-active">
-        <i class="ti ti-clock"></i> Asistencia
+      <i class="ti ti-clock"></i> Asistencia
     </router-link>
 
     <router-link v-if="esAdmin" to="/nomina" class="nav-item" active-class="nav-item-active">
-        <i class="ti ti-cash"></i> Nomina
+      <i class="ti ti-cash"></i> Nomina
     </router-link>
 
     <!-- Todos los roles -->
     <router-link to="/permisos-vacaciones" class="nav-item" active-class="nav-item-active">
-        <i class="ti ti-calendar-off"></i> Permisos y Vacaciones
+      <i class="ti ti-calendar-off"></i> Permisos y Vacaciones
     </router-link>
 
     <router-link to="/capacitaciones" class="nav-item" active-class="nav-item-active">
-        <i class="ti ti-school"></i> Capacitaciones
+      <i class="ti ti-school"></i> Capacitaciones
     </router-link>
 
     <!-- Conocimiento -->
     <div class="sidebar-section">Conocimiento</div>
 
-    <router-link to="/basedeconocimiento" class="nav-item" active-class="nav-item-active">
-        <i class="ti ti-books"></i> Base de conocimiento
+    <router-link v-if="esAdmin" to="/basedeconocimiento" class="nav-item" active-class="nav-item-active">
+      <i class="ti ti-books"></i> Base de conocimiento
     </router-link>
 
     <router-link to="/chatia" class="nav-item" active-class="nav-item-active">
-        <i class="ti ti-sparkles"></i> Asistente IA
+      <i class="ti ti-sparkles"></i> Asistente IA
     </router-link>
 
     <!-- Sistema — solo admin -->
     <div v-if="esAdmin" class="sidebar-section">Sistema</div>
 
     <router-link v-if="esAdmin" to="/reportes" class="nav-item" active-class="nav-item-active">
-        <i class="ti ti-chart-bar"></i> Reportes
+      <i class="ti ti-chart-bar"></i> Reportes
     </router-link>
 
-    <router-link v-if="esAdmin" to="/auditoria" class="nav-item" active-class="nav-item-active">
-        <i class="ti ti-shield-check"></i> Auditoria
-    </router-link>
+    
 
     <router-link v-if="esAdmin" to="/configuracion" class="nav-item" active-class="nav-item-active">
-        <i class="ti ti-settings"></i> Configuración
+      <i class="ti ti-settings"></i> Configuración
     </router-link>
 
     <div class="nav-item" @click="cerrarSesion" style="margin-top: 20px; color: rgba(255, 100, 100, .7)">
-        <i class="ti ti-logout"></i>
-        Cerrar sesión
+      <i class="ti ti-logout"></i>
+      Cerrar sesión
     </div>
 
-</nav>
-
+  </nav>
 </template>
 
 <style>
-
 @import url(../assets/styles/base.css);
 
 .nav-item-active {
-    background: rgba(91, 196, 160, .13);
-    color: #5bc4a0;
-    border-left: 30px solid #5bc4a0;
-    border-radius: 5px;
-    margin: 2px 7px 2px 7px;
+  background: rgba(91, 196, 160, .13);
+  color: #5bc4a0;
+  border-left: 30px solid #5bc4a0;
+  border-radius: 5px;
+  margin: 2px 7px 2px 7px;
 }
 
 .nav {
-    display: block;
-    unicode-bidi: isolate;
+  display: block;
+  unicode-bidi: isolate;
 }
 
 .sidebar {
-    width: 218px;
-    background: #122b44;
-    position: fixed;
-    top: 54px;
-    bottom: 0;
-    left: 0;
-    overflow-y: auto;
-    padding: 14px 0;
-    z-index: 90;
+  width: 218px;
+  background: #122b44;
+  position: fixed;
+  top: 54px;
+  bottom: 0;
+  left: 0;
+  overflow-y: auto;
+  padding: 14px 0;
+  z-index: 90;
 }
 
 .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 9px 18px;
-    cursor: pointer;
-    color: rgba(255, 255, 255, .6);
-    font-size: 13.5px;
-    border-left: 3px solid transparent;
-    transition: all .15s;
-    user-select: none;
-    text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 18px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, .6);
+  font-size: 13.5px;
+  border-left: 3px solid transparent;
+  transition: all .15s;
+  user-select: none;
+  text-decoration: none;
 }
 
 .nav-item:hover {
-    background: rgba(255,255,255,.05);
+  background: rgba(255,255,255,.05);
 }
 
 .nav-item i {
-    font-size: 17px;
-    flex-shrink: 0;
+  font-size: 17px;
+  flex-shrink: 0;
 }
 
 .ti {
-    font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    Oxygen,
-    Ubuntu,
-    Cantarell,
-    'Fira Sans',
-    'Droid Sans',
-    'Helvetica Neue',
-    sans-serif;
-    speak-as: none;
-    font-style: normal;
-    font-weight: normal;
-    font-variant: normal;
-    text-transform: none;
-    line-height: 1;
-    -wekit-font-smoothing: antialiased;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  speak-as: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
 }
 
 .sidebar-section {
-    padding: 10px 18px 3px;
-    font-size: 10.5px;
-    color: rgba(255, 255, 255, .3);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-top: 6px;
+  padding: 10px 18px 3px;
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, .3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 6px;
 }
-
 </style>

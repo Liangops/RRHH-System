@@ -3,7 +3,7 @@ import mongoose from 'mongoose'
 const pagoSchema = new mongoose.Schema({
   nombre:           { type: String, required: true },
   correo:           { type: String, required: true },
-  rnc:              { type: String, default: '000000000' },
+  rnc:              { type: String, default: '132907401' },
   plan:             { type: String, required: true },
   monto:            { type: String, required: true },
   orderID:          { type: String, required: true, unique: true },

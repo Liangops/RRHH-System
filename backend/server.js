@@ -21,6 +21,9 @@ import capacitacionesRouter from './routes/capacitaciones.js'
 import reportesRouter from './routes/reportes.js'
 import { generarFacturaPDF } from './utils/factura.js'
 
+import documentosRoutes from './routes/documento.js';
+import chatIARoutes from './routes/chatIA.js';
+
 dotenv.config()
 
 const __filename = fileURLToPath(import.meta.url)
@@ -44,6 +47,9 @@ app.use('/api/auth', authRouter)
 app.use('/api/admin', adminRouter)
 app.use('/api/capacitaciones', capacitacionesRouter)
 app.use('/api/reportes', reportesRouter)
+
+app.use('/api/documentos', documentosRoutes);
+app.use('/api/chat-ia', chatIARoutes);
 
 app.listen(process.env.PORT, () =>
   console.log(`Puerto ${process.env.PORT}`)
