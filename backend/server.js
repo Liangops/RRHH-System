@@ -23,6 +23,7 @@ import { generarFacturaPDF } from './utils/factura.js'
 
 import documentosRoutes from './routes/documento.js';
 import chatIARoutes from './routes/chatIA.js';
+import consultasRoutes from './routes/consultas.js'
 
 dotenv.config()
 
@@ -50,6 +51,7 @@ app.use('/api/reportes', reportesRouter)
 
 app.use('/api/documentos', documentosRoutes);
 app.use('/api/chat-ia', chatIARoutes);
+app.use('/api/consultas', consultasRoutes)
 
 app.listen(process.env.PORT, () =>
   console.log(`Puerto ${process.env.PORT}`)

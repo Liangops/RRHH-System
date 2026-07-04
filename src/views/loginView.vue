@@ -217,12 +217,12 @@ async function cerrarSesion() {
             <div class="form-title">Bienvenido de nuevo</div>
             <div class="form-sub">Ingresa tus credenciales para continuar</div>
             <div class="field">
-              <label class="field-label">Correo electrónico</label>
-              <div class="inp-wrap">
-                <i class="ti ti-mail inp-icon"></i>
-                <input v-model="form.correo" type="email" class="inp" placeholder="correo@empresa.com" @keyup.enter="login" />
-              </div>
-            </div>
+  <label class="field-label">Usuario o correo electrónico</label>
+  <div class="inp-wrap">
+    <i class="ti ti-user inp-icon"></i>
+    <input v-model="form.correo" type="text" class="inp" placeholder="usuario o correo@empresa.com" @keyup.enter="login" />
+  </div>
+</div>
             <div class="field">
               <label class="field-label">Contraseña</label>
               <div class="inp-wrap">

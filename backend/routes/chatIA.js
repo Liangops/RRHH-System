@@ -1,6 +1,7 @@
 import express from 'express';
 import Groq from 'groq-sdk';
 import Documento from '../models/documento.js';
+import InteraccionIA from '../models/interaccionIA.js';
 import { verificarToken } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -46,6 +47,14 @@ ${contexto}`
     });
 
     const respuesta = response.choices[0].message.content;
+
+    // Guardar la interacción para poder medir uso de IA por usuario
+    InteraccionIA.create({
+      usuarioId: req.usuario.id,
+      pregunta,
+      respuesta
+    }).catch(err => console.error('Error guardando interacción IA:', err.message));
+
     res.json({ respuesta });
 
   } catch (error) {

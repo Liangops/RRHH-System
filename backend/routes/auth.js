@@ -47,10 +47,28 @@ router.get('/me', verificarToken, async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { correo, password } = req.body
-    const usuario = await Usuario.findOne({ correo })
+    const identificador = correo?.trim()
+
+    console.log('🔍 Intentando login con:', identificador)
+
+    if (!identificador || !password) {
+      return res.status(400).json({ error: 'Completa usuario/correo y contraseña' })
+    }
+
+    const usuario = await Usuario.findOne({
+      $or: [
+        { correo: identificador },
+        { nombre: identificador }
+      ]
+    })
+
+    console.log('🔍 Usuario encontrado:', usuario ? usuario.correo : 'NINGUNO')
+
     if (!usuario) return res.status(401).json({ error: 'Credenciales incorrectas' })
 
     const ok = await bcrypt.compare(password, usuario.password)
+    console.log('🔍 Password coincide:', ok)
+
     if (!ok) return res.status(401).json({ error: 'Credenciales incorrectas' })
 
     const token = jwt.sign(

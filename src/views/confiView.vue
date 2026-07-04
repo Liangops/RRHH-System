@@ -133,6 +133,7 @@ const empleadoNombre = (id) => {
         <thead>
           <tr>
             <th>Usuario</th>
+            <th>Correo</th>
             <th>Empleado vinculado</th>
             <th>Rol</th>
             <th>Estado</th>
@@ -141,6 +142,7 @@ const empleadoNombre = (id) => {
         </thead>
         <tbody>
           <tr v-for="u in usuarios" :key="u._id">
+            <td>{{ u.nombre }}</td>
             <td>{{ u.correo }}</td>
             <td>{{ empleadoNombre(u.empleadoId) }}</td>
             <td>

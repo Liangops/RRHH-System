@@ -14,6 +14,7 @@ import superadminView from "../views/superadminView.vue";
 import configuracionView from "../views/confiView.vue";
 import basedeconocimientoView from "../views/basedeconocimientoView.vue";
 import chatiaView from "../views/chatiaView.vue";
+import consultasAvanzadas from "../views/consultasAvanzadas.vue";
 
 const routes = [
   { path: "/", redirect: "/login" },
@@ -93,6 +94,14 @@ const routes = [
     path: "/chatia",
     name: "chatia",
     component: chatiaView,
+    meta: { requiereAuth: true },
+  },
+
+  {
+    // ← Todos los roles autenticados pueden usar el chat
+    path: "/consultasAvanzadas",
+    name: "consultasAvanzadas",
+    component: consultasAvanzadas,
     meta: { requiereAuth: true },
   },
 ];

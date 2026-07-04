@@ -81,6 +81,10 @@ async function cerrarSesion() {
       <i class="ti ti-settings"></i> Configuración
     </router-link>
 
+    <router-link v-if="esAdmin" to="/consultasavanzadas" class="nav-item" active-class="nav-item-active">
+      <i class="ti ti-settings"></i> Consultas Avanzadas
+    </router-link>
+
     <div class="nav-item" @click="cerrarSesion" style="margin-top: 20px; color: rgba(255, 100, 100, .7)">
       <i class="ti ti-logout"></i>
       Cerrar sesión

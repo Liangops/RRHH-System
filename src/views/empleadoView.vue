@@ -313,7 +313,6 @@ async function guardarEmpleado() {
               <option value="" disabled>Seleccione</option>
               <option>Activo</option>
               <option>Inactivo</option>
-              <option>En permiso</option>
             </select>
             <span v-if="errores.estado" class="error-msg">{{ errores.estado }}</span>
           </div>
